@@ -167,6 +167,52 @@
       return { type: 'FeatureCollection', features: shadows };
     }
 
+    function createGroundCompassFeatures(center = [121.1905, 24.9655]) {
+      const latitudeScale = 111320;
+      const longitudeScale = latitudeScale * Math.cos(center[1] * Math.PI / 180);
+      const toCoordinate = ([east, north]) => [center[0] + east / longitudeScale, center[1] + north / latitudeScale];
+      const features = [];
+      const close = (points) => { const coordinates = points.map(toCoordinate); coordinates.push(coordinates[0]); return coordinates; };
+      const polygon = (kind, points, tone = 'cardinal') => features.push({ type: 'Feature', properties: { kind, tone }, geometry: { type: 'Polygon', coordinates: [close(points)] } });
+      const line = (kind, points, tone = 'outline') => features.push({ type: 'Feature', properties: { kind, tone }, geometry: { type: 'LineString', coordinates: points.map(toCoordinate) } });
+      const circle = (radius, steps = 64) => Array.from({ length: steps }, (_, index) => {
+        const angle = index * Math.PI * 2 / steps;
+        return [Math.cos(angle) * radius, Math.sin(angle) * radius];
+      });
+
+      polygon('compass-disk', circle(37), 'paper');
+      line('compass-ring', circle(36), 'outline');
+      line('compass-ring', circle(21), 'muted');
+      polygon('compass-center', circle(2), 'center');
+
+      for (let index = 0; index < 8; index++) {
+        const angle = Math.PI / 2 - index * Math.PI / 4;
+        const direction = [Math.cos(angle), Math.sin(angle)];
+        const perpendicular = [-direction[1], direction[0]];
+        line('compass-tick', [
+          [direction[0] * 23, direction[1] * 23],
+          [direction[0] * 26, direction[1] * 26]
+        ], index % 2 === 0 ? 'cardinal' : 'muted');
+        const point = (distance, side = 0) => [direction[0] * distance + perpendicular[0] * side, direction[1] * distance + perpendicular[1] * side];
+        const tone = index === 0 ? 'north' : index % 2 === 0 ? 'cardinal' : 'diagonal';
+        polygon('compass-needle', [point(18), point(4, 2.5), point(0), point(4, -2.5)], tone);
+      }
+
+      const glyphs = {
+        N: [[[-0.5, -0.5], [-0.5, 0.5], [0.5, -0.5], [0.5, 0.5]]],
+        E: [[[-0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]], [[-0.5, 0], [0.35, 0]], [[-0.5, -0.5], [0.5, -0.5]]],
+        S: [[[0.5, 0.5], [-0.5, 0.5], [-0.5, 0], [0.5, 0], [0.5, -0.5], [-0.5, -0.5]]],
+        W: [[[-0.5, 0.5], [-0.4, -0.5], [0, 0], [0.4, -0.5], [0.5, 0.5]]]
+      };
+      const glyphCenters = { N: [0, 29], E: [29, 0], S: [0, -29], W: [-29, 0] };
+      Object.entries(glyphs).forEach(([letter, paths]) => {
+        const [east, north] = glyphCenters[letter];
+        paths.forEach((path) => line('compass-glyph', path.map(([x, y]) => [east + x * 6, north + y * 8]), letter === 'N' ? 'north' : 'cardinal'));
+      });
+
+      return { type: 'FeatureCollection', features };
+    }
+
     function roundFootprintRing(ring) {
       const vertices = ring.length > 1 && ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1] ? ring.slice(0, -1) : ring;
       if (vertices.length < 4) return ring;
@@ -546,12 +592,36 @@
           });
           map.addSource('campus', { type: 'geojson', data, attribution: '© OpenStreetMap contributors' });
           map.addSource('campus-building-shadows', { type: 'geojson', data: buildingShadows });
+          map.addSource('campus-ground-compass', { type: 'geojson', data: createGroundCompassFeatures() });
           map.addLayer({ id: 'campus-green', source: 'campus', type: 'fill', filter: ['==', ['get', 'kind'], 'green'], paint: { 'fill-color': '#f1f2ef', 'fill-opacity': 0.92 } });
           map.addLayer({ id: 'campus-water', source: 'campus', type: 'fill', filter: ['==', ['get', 'kind'], 'water'], paint: { 'fill-color': '#e8eef0', 'fill-opacity': 0.95 } });
           map.addLayer({ id: 'campus-road-casing', source: 'campus', type: 'line', filter: ['==', ['get', 'kind'], 'road'], layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 4.8, 18, 9.4], 'line-opacity': 1 } });
           map.addLayer({ id: 'campus-roads', source: 'campus', type: 'line', filter: ['==', ['get', 'kind'], 'road'], layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#cbd0cc', 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 3.2, 18, 7.2], 'line-opacity': 1 } });
           map.addLayer({ id: 'campus-building-shadow-soft', source: 'campus-building-shadows', type: 'fill', filter: ['==', ['get', 'kind'], 'building-shadow-soft'], paint: { 'fill-color': '#68726b', 'fill-opacity': 0.035 } });
           map.addLayer({ id: 'campus-building-shadow-core', source: 'campus-building-shadows', type: 'fill', filter: ['==', ['get', 'kind'], 'building-shadow-core'], paint: { 'fill-color': '#59635c', 'fill-opacity': 0.085 } });
+          map.addLayer({
+            id: 'campus-ground-compass-disk', source: 'campus-ground-compass', type: 'fill',
+            filter: ['==', ['get', 'kind'], 'compass-disk'],
+            paint: { 'fill-color': '#f7f5ef', 'fill-opacity': 0.88 }
+          });
+          map.addLayer({
+            id: 'campus-ground-compass-needles', source: 'campus-ground-compass', type: 'fill',
+            filter: ['in', ['get', 'kind'], ['literal', ['compass-needle', 'compass-center']]],
+            paint: {
+              'fill-color': ['match', ['get', 'tone'], 'north', '#a55f48', 'cardinal', '#43584b', 'diagonal', '#89948c', 'center', '#43584b', '#43584b'],
+              'fill-opacity': 0.94
+            }
+          });
+          map.addLayer({
+            id: 'campus-ground-compass-detail', source: 'campus-ground-compass', type: 'line',
+            filter: ['in', ['get', 'kind'], ['literal', ['compass-ring', 'compass-tick', 'compass-glyph']]],
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: {
+              'line-color': ['match', ['get', 'tone'], 'north', '#a55f48', 'cardinal', '#43584b', 'diagonal', '#89948c', 'muted', '#b4bbb5', '#59635c'],
+              'line-width': ['interpolate', ['linear'], ['zoom'], 14, 1.1, 18, 2.2],
+              'line-opacity': 0.92
+            }
+          });
           map.addLayer({
             id: 'campus-buildings', source: 'campus', type: 'fill-extrusion', filter: ['==', ['get', 'kind'], 'building'],
             paint: {
