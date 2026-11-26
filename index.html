@@ -225,42 +225,19 @@
       features.forEach((feature) => {
         const polygons = feature.geometry.type === 'Polygon' ? [feature.geometry.coordinates] : feature.geometry.coordinates;
         polygons.forEach((polygon) => {
+          const height = Number(feature.properties.mapHeight) || 8;
+          const groundRings = [];
+          const roofRings = [];
           polygon.forEach((ring) => {
             if (ring.length < 4) return;
             const vertices = ring.slice(0, -1);
             const elevations = vertices.map(terrainElevation);
-            const ground = vertices.map((coordinate, index) => toMercator(coordinate, elevations[index]));
-            const height = Number(feature.properties.mapHeight) || 8;
-            const roof = vertices.map((coordinate, index) => toMercator(coordinate, elevations[index] + height));
-            const center = [0, 0, 0];
-            ground.concat(roof).forEach((point) => {
-              center[0] += point[0] / (ground.length + roof.length);
-              center[1] += point[1] / (ground.length + roof.length);
-              center[2] += point[2] / (ground.length + roof.length);
-            });
-            buildings.push({ ground, roof, center });
+            groundRings.push(vertices.map((coordinate, index) => toMercator(coordinate, elevations[index])));
+            roofRings.push(vertices.map((coordinate, index) => toMercator(coordinate, elevations[index] + height)));
           });
+          if (groundRings.length) buildings.push({ groundRings, roofRings });
         });
       });
-
-      const convexHull = (points) => {
-        const sorted = points.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-        if (sorted.length < 3) return sorted;
-        const cross = (origin, a, b) => (a[0] - origin[0]) * (b[1] - origin[1]) - (a[1] - origin[1]) * (b[0] - origin[0]);
-        const lower = [];
-        const upper = [];
-        sorted.forEach((point) => {
-          while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) lower.pop();
-          lower.push(point);
-        });
-        sorted.slice().reverse().forEach((point) => {
-          while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) upper.pop();
-          upper.push(point);
-        });
-        lower.pop();
-        upper.pop();
-        return lower.concat(upper);
-      };
 
       return {
         id: 'campus-silhouette-outline',
@@ -270,6 +247,8 @@
           this.canvas = document.createElement('canvas');
           this.canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1';
           this.context = this.canvas.getContext('2d');
+          this.maskCanvas = document.createElement('canvas');
+          this.maskContext = this.maskCanvas.getContext('2d', { willReadFrequently: true });
           _map.getCanvasContainer().appendChild(this.canvas);
         },
         render(_gl, matrix) {
@@ -279,46 +258,74 @@
             this.canvas.width = width;
             this.canvas.height = height;
           }
-          const context = this.context;
-          context.setTransform(1, 0, 0, 1, 0, 0);
-          context.clearRect(0, 0, width, height);
-          const bearing = map.getBearing() * Math.PI / 180;
-          const pitch = map.getPitch() * Math.PI / 180;
-          const cameraX = -Math.sin(bearing) * Math.sin(pitch);
-          const cameraY = Math.cos(bearing) * Math.sin(pitch);
-          const cameraZ = Math.cos(pitch);
+          const maskWidth = Math.max(1, Math.round(map.getCanvas().clientWidth || width));
+          const maskHeight = Math.max(1, Math.round(map.getCanvas().clientHeight || height));
+          if (this.maskCanvas.width !== maskWidth || this.maskCanvas.height !== maskHeight) {
+            this.maskCanvas.width = maskWidth;
+            this.maskCanvas.height = maskHeight;
+          }
+          const maskContext = this.maskContext;
+          maskContext.clearRect(0, 0, maskWidth, maskHeight);
           const project = ([x, y, z]) => {
             const clipX = matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12];
             const clipY = matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13];
             const clipW = matrix[3] * x + matrix[7] * y + matrix[11] * z + matrix[15];
             if (clipW <= 0) return null;
-            return [(clipX / clipW * 0.5 + 0.5) * width, (1 - (clipY / clipW * 0.5 + 0.5)) * height];
+            return [(clipX / clipW * 0.5 + 0.5) * maskWidth, (1 - (clipY / clipW * 0.5 + 0.5)) * maskHeight];
           };
-          context.strokeStyle = '#171b18';
-          context.lineWidth = Math.max(1.5, window.devicePixelRatio * 1.2);
-          context.lineJoin = 'round';
-          context.lineCap = 'round';
-          const projectedBuildings = buildings.map(({ ground, roof, center }) => {
-            const points = ground.concat(roof).map(project).filter(Boolean);
-            return { hull: convexHull(points), depth: center[0] * cameraX + center[1] * cameraY + center[2] * cameraZ };
-          }).filter(({ hull }) => hull.length >= 3).sort((a, b) => a.depth - b.depth);
-          projectedBuildings.forEach(({ hull }) => {
-            context.beginPath();
-            context.moveTo(hull[0][0], hull[0][1]);
-            hull.slice(1).forEach(([x, y]) => context.lineTo(x, y));
-            context.closePath();
-            context.globalCompositeOperation = 'destination-out';
-            context.fill();
-            context.globalCompositeOperation = 'source-over';
-            context.beginPath();
-            context.moveTo(hull[0][0], hull[0][1]);
-            hull.slice(1).forEach(([x, y]) => context.lineTo(x, y));
-            context.closePath();
-            context.stroke();
+          maskContext.fillStyle = '#fff';
+          buildings.forEach(({ groundRings, roofRings }) => {
+            maskContext.beginPath();
+            let validRoof = true;
+            roofRings.forEach((ring) => {
+              const points = ring.map(project);
+              if (points.some((point) => !point)) { validRoof = false; return; }
+              maskContext.moveTo(points[0][0], points[0][1]);
+              points.slice(1).forEach(([x, y]) => maskContext.lineTo(x, y));
+              maskContext.closePath();
+            });
+            if (validRoof) maskContext.fill('evenodd');
+
+            groundRings.forEach((ground, ringIndex) => {
+              const roof = roofRings[ringIndex];
+              for (let index = 0; index < ground.length; index++) {
+                const next = (index + 1) % ground.length;
+                const quad = [ground[index], ground[next], roof[next], roof[index]].map(project);
+                if (quad.some((point) => !point)) continue;
+                maskContext.beginPath();
+                maskContext.moveTo(quad[0][0], quad[0][1]);
+                quad.slice(1).forEach(([x, y]) => maskContext.lineTo(x, y));
+                maskContext.closePath();
+                maskContext.fill();
+              }
+            });
           });
+
+          // Rebuild the screen-space silhouette for every rendered map frame.
+          const mask = maskContext.getImageData(0, 0, maskWidth, maskHeight).data;
+          const edges = maskContext.createImageData(maskWidth, maskHeight);
+          const edgePixels = edges.data;
+          for (let y = 1; y < maskHeight - 1; y++) {
+            for (let x = 1; x < maskWidth - 1; x++) {
+              const index = (y * maskWidth + x) * 4;
+              if (mask[index + 3] < 16) continue;
+              const hasBackground = mask[index - 4 + 3] < 16 || mask[index + 4 + 3] < 16 || mask[index - maskWidth * 4 + 3] < 16 || mask[index + maskWidth * 4 + 3] < 16;
+              if (!hasBackground) continue;
+              edgePixels[index] = 23;
+              edgePixels[index + 1] = 27;
+              edgePixels[index + 2] = 24;
+              edgePixels[index + 3] = 235;
+            }
+          }
+          maskContext.putImageData(edges, 0, 0);
+          this.context.setTransform(1, 0, 0, 1, 0, 0);
+          this.context.clearRect(0, 0, width, height);
+          this.context.imageSmoothingEnabled = true;
+          this.context.drawImage(this.maskCanvas, 0, 0, maskWidth, maskHeight, 0, 0, width, height);
         },
         onRemove() {
           this.canvas?.remove();
+          this.maskCanvas = null;
         }
       };
     }
