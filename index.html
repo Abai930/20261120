@@ -1,70 +1,384 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#080d1d">
-<title>霓虹疾行 | NEON RUN</title>
-<style>
-:root{color-scheme:dark;--cyan:#71f4ff;--pink:#ff5dcc;--ink:#080d1d}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--ink);font-family:Inter,"Noto Sans TC","Microsoft JhengHei",sans-serif;color:#f5f8ff}#game{position:fixed;inset:0}#game canvas{display:block;width:100%;height:100%}.vignette{pointer-events:none;position:fixed;inset:0;background:linear-gradient(180deg,rgba(5,8,20,.22),transparent 38%,transparent 72%,rgba(2,5,15,.48)),radial-gradient(ellipse at center,transparent 35%,rgba(2,5,15,.46) 100%)}.hud{position:fixed;z-index:2;inset:0;pointer-events:none;padding:clamp(18px,4vw,40px);display:flex;justify-content:space-between;align-items:flex-start}.brand{font-size:12px;font-weight:800;letter-spacing:.25em;color:#def1ffad;text-shadow:0 0 16px #69efff55}.brand strong{display:block;color:#fff;font-size:clamp(18px,3vw,26px);letter-spacing:.12em;margin-top:6px}.stats{display:flex;gap:clamp(14px,3vw,34px);text-align:right}.stat-label{color:#9aa9c8;font-size:10px;letter-spacing:.18em;font-weight:700}.stat-value{font-variant-numeric:tabular-nums;font-size:clamp(20px,4vw,30px);font-weight:800;letter-spacing:.04em;margin-top:4px;text-shadow:0 0 15px #68f4ff55}.stat-value small{font-size:12px;color:var(--cyan);margin-left:3px}.center-layer{position:fixed;z-index:3;inset:0;display:grid;place-items:center;padding:24px}.panel{width:min(450px,100%);text-align:center;padding:clamp(26px,6vw,48px);border:1px solid #9aefff35;border-radius:24px;background:linear-gradient(145deg,#111b32e8,#090f20ed);box-shadow:0 20px 90px #0008,inset 0 1px #ffffff12,0 0 55px #2bd4ff12;backdrop-filter:blur(12px)}.eyebrow{color:var(--cyan);font-size:11px;letter-spacing:.28em;font-weight:800}h1{font-size:clamp(38px,9vw,62px);line-height:1;letter-spacing:.05em;margin:13px 0 12px;text-shadow:0 0 28px #51e9ff55}.description{color:#adb9d1;line-height:1.8;font-size:14px;margin:0 auto 25px;max-width:330px}.keys{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:0 auto 26px}.key{color:#dce8ff;font-size:11px;border:1px solid #9baecb38;border-radius:8px;padding:8px 10px;background:#ffffff08}.key b{color:var(--cyan)}button{font:inherit;cursor:pointer}#startButton{border:0;border-radius:999px;color:#06101c;background:linear-gradient(100deg,#6ef5ff,#a4ffda);padding:14px 34px;font-weight:900;letter-spacing:.12em;box-shadow:0 8px 30px #52eaff35;transition:transform .15s,filter .15s}#startButton:hover{transform:translateY(-2px);filter:brightness(1.08)}#googleSignInButton{border:1px solid #dce8ff40;border-radius:999px;color:#eef5ff;background:#ffffff0c;padding:12px 22px;font-weight:700;letter-spacing:.04em}#googleSignInButton:hover,#signOutButton:hover{background:#ffffff18}.account-row{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 auto 18px;color:#dce8ff;font-size:13px}.account-name{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.quiet-button{border:1px solid #dce8ff35;border-radius:999px;color:#c5d4ed;background:#ffffff08;padding:7px 12px;font-size:11px}.auth-message{min-height:20px;margin:12px 0 0;color:#ffb6cd;font-size:12px;line-height:1.5}.hidden{display:none}.hint{position:fixed;z-index:2;bottom:24px;left:0;right:0;text-align:center;color:#c4d1eb8a;font-size:11px;letter-spacing:.08em;pointer-events:none}.touch-controls{position:fixed;z-index:2;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom));padding:0 22px;display:none;justify-content:space-between;pointer-events:none}.touch-controls button{pointer-events:auto;width:60px;height:60px;border-radius:50%;border:1px solid #b5f5ff66;color:#d9fbff;background:#08142699;backdrop-filter:blur(8px);font-size:21px;box-shadow:0 0 22px #36d9ff1a;touch-action:manipulation}@media(pointer:coarse){.touch-controls{display:flex}.hint{bottom:96px}}@media(max-width:520px){.hud{padding:18px}.brand{font-size:9px}.brand strong{font-size:17px}.stat-label{font-size:8px}.stat-value{font-size:20px}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f6f4">
+  <title>拾記｜待辦筆記本</title>
+  <style>
+    :root{font-family:Inter,"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;color:#202b26;background:#f4f6f4;font-synthesis:none;text-rendering:optimizeLegibility;--ink:#202b26;--muted:#758079;--line:#e7ebe7;--green:#26745c;--green-dark:#1e5e4b;--mint:#e8f3ed;--paper:#fff;--orange:#b86b3d;--shadow:0 14px 40px #1c34250a}*{box-sizing:border-box}body{margin:0;min-width:320px;min-height:100vh}button,input,textarea,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #69aa8c70;outline-offset:2px}[hidden]{display:none!important}.login-screen{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 12% 10%,#e1efe6 0,transparent 42%),#f4f6f4}.login-card{width:min(430px,100%);padding:46px 42px;text-align:center;background:var(--paper);border:1px solid #e5ebe6;border-radius:24px;box-shadow:0 24px 80px #17342110}.brand-mark{width:46px;height:46px;display:grid;place-items:center;margin:0 auto 18px;border-radius:15px;background:var(--green);color:white;font-size:22px;font-weight:800}.login-card h1{margin:0;font-size:30px;letter-spacing:.02em}.login-card .subtitle{margin:12px 0 28px;color:var(--muted);font-size:14px;line-height:1.8}.google-button{width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:13px 18px;border:1px solid #dce3dd;border-radius:12px;background:#fff;color:#29342e;font-weight:650;transition:background .15s,border-color .15s}.google-button:hover{background:#f7faf7;border-color:#c6d6ca}.google-g{font-size:18px;font-weight:800;color:#4285f4}.login-hint{min-height:22px;margin:14px 0 0;color:#a64b44;font-size:12px;line-height:1.6}.app-shell{min-height:100vh;max-width:1440px;margin:auto}.topbar{height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;border-bottom:1px solid var(--line);background:#ffffffd9}.brand{display:flex;align-items:center;gap:12px;color:var(--ink);font-weight:800;letter-spacing:.015em}.brand .brand-mark{width:34px;height:34px;margin:0;border-radius:11px;font-size:17px}.brand small{display:block;color:var(--muted);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}.account{display:flex;align-items:center;gap:12px}.avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#e5eee8}.account-email{max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#536058;font-size:13px}.text-button{padding:8px 11px;border:0;border-radius:9px;background:transparent;color:#68756d;font-size:12px}.text-button:hover{background:#eef2ee;color:var(--ink)}.layout{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:calc(100vh - 76px)}.sidebar{padding:30px 18px;border-right:1px solid var(--line);background:#fbfcfb}.new-task-link{width:100%;display:flex;align-items:center;gap:10px;padding:13px 15px;border:0;border-radius:12px;background:var(--green);color:white;font-size:14px;font-weight:700;box-shadow:0 5px 12px #26745c21}.new-task-link:hover{background:var(--green-dark)}.plus{font-size:19px;font-weight:400;line-height:1}.nav-label{margin:30px 11px 10px;color:#9aa39c;font-size:10px;font-weight:750;letter-spacing:.14em}.nav-list{display:grid;gap:4px}.nav-item{width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px 12px;border:0;border-radius:10px;background:transparent;color:#5f6b63;text-align:left;font-size:13px}.nav-item:hover{background:#f1f4f1}.nav-item.active{background:var(--mint);color:var(--green-dark);font-weight:700}.nav-item .nav-label-text{display:flex;align-items:center;gap:10px}.nav-icon{width:18px;text-align:center;font-size:15px}.nav-count{color:#99a39c;font-size:11px}.sidebar-note{margin-top:42px;padding:15px 13px;border:1px solid #e5ede7;border-radius:13px;background:#f7faf7;color:#68756d;font-size:11px;line-height:1.7}.sidebar-note strong{display:block;margin-bottom:4px;color:#3b5948;font-size:12px}.main{width:min(920px,100%);margin:0 auto;padding:42px 48px 70px}.page-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:27px}.eyebrow{margin:0 0 7px;color:var(--green);font-size:10px;font-weight:800;letter-spacing:.16em}.page-heading h1{margin:0;font-size:clamp(28px,4vw,38px);letter-spacing:-.04em}.date-line{margin:8px 0 0;color:var(--muted);font-size:13px}.task-total{flex:none;color:#758079;font-size:12px}.capture-card{padding:18px;border:1px solid #e6ebe6;border-radius:17px;background:var(--paper);box-shadow:var(--shadow)}.capture-title{display:flex;align-items:center;gap:12px}.capture-title input{flex:1;min-width:0;padding:9px 2px;border:0;background:transparent;color:var(--ink);font-size:15px}.capture-title input::placeholder{color:#aab2ac}.capture-fields{display:grid;grid-template-columns:minmax(0,1fr) 150px 138px auto;gap:10px;align-items:center;margin-top:12px;padding-top:13px;border-top:1px solid #f0f2f0}.capture-fields input,.capture-fields select,.edit-form input,.edit-form textarea,.edit-form select{width:100%;padding:9px 11px;border:1px solid #e8ece8;border-radius:9px;background:#fbfcfb;color:#435048;font-size:12px}.capture-fields input::placeholder,.edit-form input::placeholder,.edit-form textarea::placeholder{color:#a6aea8}.add-button{padding:10px 15px;border:0;border-radius:9px;background:#e8f3ed;color:#21634d;font-size:12px;font-weight:750;white-space:nowrap}.add-button:hover{background:#dcece2}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:30px 0 13px}.toolbar-left{display:flex;align-items:center;gap:9px}.toolbar h2{margin:0;font-size:15px;font-weight:750}.search-box{width:min(240px,42vw);position:relative}.search-box input{width:100%;padding:9px 12px 9px 34px;border:1px solid #e5eae5;border-radius:10px;background:#fff;color:var(--ink);font-size:12px}.search-box span{position:absolute;left:12px;top:8px;color:#98a29a;font-size:15px}.clear-button{padding:8px;border:0;background:transparent;color:#9a6257;font-size:11px}.clear-button:hover{color:#9b4437}.task-list{display:grid;gap:9px}.task-card{display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:start;gap:13px;padding:16px 17px;border:1px solid #e7ebe7;border-radius:14px;background:var(--paper);box-shadow:0 5px 18px #18342106;transition:border-color .15s,transform .15s}.task-card:hover{border-color:#d4e1d7;transform:translateY(-1px)}.task-check{appearance:none;width:19px;height:19px;margin:2px 0 0;border:1.5px solid #c6d1c8;border-radius:50%;background:white;cursor:pointer}.task-check:checked{border-color:var(--green);background:var(--green);box-shadow:inset 0 0 0 4px white}.task-body{min-width:0}.task-title{margin:0;color:#2f3933;font-size:14px;font-weight:650;line-height:1.5;overflow-wrap:anywhere}.task-note{margin:5px 0 0;color:#7e8981;font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}.task-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:7px;background:#f3f5f3;color:#758079;font-size:10px}.chip.due-soon{background:#fff3e9;color:#ad6537}.chip.overdue{background:#fff0ed;color:#ac5345}.chip.priority-high{background:#fff0ed;color:#ac5345}.chip.priority-low{background:#f1f3f1;color:#7e8981}.task-actions{display:flex;gap:3px;opacity:.72}.icon-button{width:30px;height:30px;display:grid;place-items:center;border:0;border-radius:8px;background:transparent;color:#7c8780;font-size:14px}.icon-button:hover{background:#f1f4f1;color:#344038}.icon-button.delete:hover{background:#fff0ed;color:#aa5143}.completed .task-title{text-decoration:line-through;color:#97a19a}.completed .task-note{color:#a5ada7}.empty-state{padding:52px 20px;text-align:center;border:1px dashed #dce4dd;border-radius:15px;background:#fafcfb}.empty-icon{width:47px;height:47px;display:grid;place-items:center;margin:0 auto 13px;border-radius:16px;background:#eaf3ed;color:var(--green);font-size:22px}.empty-state h3{margin:0;color:#3a463e;font-size:14px}.empty-state p{margin:7px 0 0;color:#87928a;font-size:12px}.save-status{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:22px;color:#9aa49c;font-size:10px}.save-dot{width:6px;height:6px;border-radius:50%;background:#78aa8b}.modal-backdrop{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:20px;background:#17251c66;backdrop-filter:blur(3px)}.modal-card{width:min(480px,100%);padding:23px;border:1px solid #e5ebe6;border-radius:18px;background:#fff;box-shadow:0 22px 70px #14271b2b}.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.modal-head h2{margin:0;font-size:18px}.modal-close{width:30px;height:30px;border:0;border-radius:8px;background:#f3f5f3;color:#647168;font-size:18px}.edit-form{display:grid;gap:12px}.edit-form label{display:grid;gap:6px;color:#657168;font-size:11px;font-weight:650}.edit-form input,.edit-form textarea,.edit-form select{font-size:13px}.edit-form textarea{min-height:90px;resize:vertical;line-height:1.6}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}.cancel-button,.save-button{padding:10px 15px;border-radius:9px;font-size:12px;font-weight:700}.cancel-button{border:1px solid #e3e8e3;background:white;color:#657168}.save-button{border:1px solid var(--green);background:var(--green);color:white}.toast{position:fixed;z-index:20;left:50%;bottom:24px;transform:translate(-50%,15px);padding:11px 16px;border-radius:10px;background:#26362d;color:#f6fff8;font-size:12px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}.toast.show{transform:translate(-50%,0);opacity:1}
+    @media(max-width:760px){.topbar{height:66px;padding:0 18px}.layout{grid-template-columns:1fr;min-height:calc(100vh - 66px)}.sidebar{display:flex;gap:10px;align-items:center;padding:12px 18px;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto}.new-task-link{width:auto;flex:none;padding:10px 13px}.nav-label,.sidebar-note{display:none}.nav-list{display:flex;gap:3px;min-width:max-content}.nav-item{width:auto;gap:8px;padding:9px 10px}.nav-count{display:none}.main{padding:30px 20px 55px}.capture-fields{grid-template-columns:1fr 1fr}.capture-fields input:first-child{grid-column:1/-1}.capture-fields .add-button{grid-column:1/-1}.topbar{padding:0 16px}.account-email{max-width:140px}.page-heading{align-items:flex-start}.task-total{margin-top:8px}}
+    @media(max-width:460px){.login-card{padding:36px 24px}.brand small{display:none}.brand{font-size:14px}.account{gap:6px}.account-email{display:none}.page-heading h1{font-size:29px}.main{padding-right:14px;padding-left:14px}.toolbar{align-items:flex-start;flex-direction:column}.toolbar-left{width:100%;justify-content:space-between}.search-box{width:100%}.task-card{grid-template-columns:22px minmax(0,1fr) auto;padding:14px 12px;gap:9px}.task-actions{opacity:1}.icon-button{width:27px;height:27px}.capture-card{padding:14px}.capture-fields{gap:8px}}
+  </style>
 </head>
 <body>
-<div id="game"></div><div class="vignette"></div>
-<div class="hud"><div class="brand">ARCADE SERIES<strong>NEON / RUN</strong></div><div class="stats"><div><div class="stat-label">SCORE</div><div class="stat-value" id="score">000000</div></div><div><div class="stat-label">COINS</div><div class="stat-value" id="coins">0 <small>◆</small></div></div><div><div class="stat-label">BEST</div><div class="stat-value" id="best">000000</div></div></div></div>
-<div class="hint" id="hint">SPACE / ↑ 跳躍　　↓ 滑行　　避開迎面而來的障礙</div>
-<div class="touch-controls"><button data-action="jump" aria-label="跳躍">↑</button><button data-action="slide" aria-label="滑行">↓</button></div>
-<div class="center-layer" id="overlay"><section class="panel"><div class="eyebrow">SIDE SCROLLER · 01</div><h1 id="panelTitle">霓虹疾行</h1><p class="description" id="panelText">在未來街區一路向前，跳過路障、滑過橫桿，收集能量晶片。跑得越遠，速度越快。</p><div class="keys"><span class="key"><b>↑ / SPACE</b> 跳躍</span><span class="key"><b>↓</b> 滑行</span></div><div class="account-row hidden" id="accountRow"><span class="account-name" id="accountName"></span><button class="quiet-button" id="signOutButton" type="button">登出</button></div><button id="googleSignInButton" type="button">使用 Google 登入</button><button id="startButton" class="hidden">開始疾跑</button><p class="auth-message" id="authMessage" aria-live="polite"></p></section></div>
-<script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js';
-import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js';
-const firebaseConfig={apiKey:'AIzaSyD6RdCg6vTumG3UfoIlYCELCIZDpNBkGuE',authDomain:'code2026-403d8.firebaseapp.com',projectId:'code2026-403d8',storageBucket:'code2026-403d8.firebasestorage.app',messagingSenderId:'536806938711',appId:'1:536806938711:web:96c4eb16a664bb1c13eb12'};
-const auth=getAuth(initializeApp(firebaseConfig)),googleProvider=new GoogleAuthProvider();googleProvider.setCustomParameters({prompt:'select_account'});
-const root=document.querySelector('#game'),scoreEl=document.querySelector('#score'),coinsEl=document.querySelector('#coins'),bestEl=document.querySelector('#best'),overlay=document.querySelector('#overlay'),panelTitle=document.querySelector('#panelTitle'),panelText=document.querySelector('#panelText'),startButton=document.querySelector('#startButton'),googleSignInButton=document.querySelector('#googleSignInButton'),signOutButton=document.querySelector('#signOutButton'),accountRow=document.querySelector('#accountRow'),accountName=document.querySelector('#accountName'),authMessage=document.querySelector('#authMessage');
-const VIEW_H=12,groundY=-3.35,clock=new THREE.Clock();let scene,camera,renderer,player,body,head,arms=[],obstacles=[],coins=[],buildings=[],stars=[],roadMarks=[];let running=false,hasEnded=false,jumpY=0,jumpVelocity=0,slideTimer=0,elapsed=0,distance=0,collected=0,score=0,best=Number(localStorage.getItem('neon-run-best')||0),speed=9.5,spawnTimer=0,runnerX=-5,viewW=20;
-const fmt=n=>String(Math.floor(n)).padStart(6,'0');bestEl.textContent=fmt(best);
-onAuthStateChanged(auth,user=>{const signedIn=Boolean(user);accountRow.classList.toggle('hidden',!signedIn);googleSignInButton.classList.toggle('hidden',signedIn);startButton.classList.toggle('hidden',!signedIn);if(user){accountName.textContent=user.displayName||user.email||'Google 使用者';if(!hasEnded)startButton.textContent='開始疾跑';authMessage.textContent=''}else if(!hasEnded){authMessage.textContent='請先使用 Google 登入以開始遊戲。'}});
-googleSignInButton.addEventListener('click',async()=>{googleSignInButton.disabled=true;authMessage.textContent='正在開啟 Google 登入…';try{await signInWithPopup(auth,googleProvider)}catch(error){console.error('Google sign-in failed:',error);const messages={'auth/popup-closed-by-user':'你已關閉 Google 登入視窗。','auth/popup-blocked':'瀏覽器封鎖了登入視窗，請允許彈出式視窗後重試。','auth/unauthorized-domain':'此網站網域尚未加入 Firebase 授權網域。'};authMessage.textContent=messages[error.code]||'Google 登入失敗，請稍後再試。'}finally{googleSignInButton.disabled=false}});
-signOutButton.addEventListener('click',async()=>{try{await signOut(auth);authMessage.textContent='已登出。'}catch(error){console.error('Sign-out failed:',error);authMessage.textContent='登出失敗，請稍後再試。'}});
-function material(color,emissive=0,intensity=0){return new THREE.MeshStandardMaterial({color,roughness:.72,metalness:.08,emissive,emissiveIntensity:intensity,flatShading:true})}
-const M={road:material(0x171d31),ground:material(0x0b1124),edge:material(0x40dfff,0x12cfff,2.2),cyan:material(0x5beeff,0x18caff,1.8),pink:material(0xff54c8,0xff22ad,1.7),suit:material(0x25304d,0x10182c,.4),skin:material(0xffd5c7),orange:material(0xff925f,0xff3e26,1.2),gold:material(0xffdf6a,0xffa900,2),white:material(0xe3f7ff)};
-function box(w,h,d,mat){return new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat)}
-function init(){scene=new THREE.Scene();scene.background=new THREE.Color(0x080d1d);scene.fog=new THREE.Fog(0x080d1d,38,100);camera=new THREE.OrthographicCamera(-10,10,6,-6,.1,150);camera.position.set(0,0,30);camera.lookAt(0,0,0);
-renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.2;root.appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xa5d8ff,0x141126,2.1));const light=new THREE.DirectionalLight(0xdffaff,2.6);light.position.set(-5,10,14);light.castShadow=true;light.shadow.mapSize.set(1024,1024);scene.add(light);const glow=new THREE.PointLight(0x36dcff,20,28);glow.position.set(3,1,8);scene.add(glow);
-const ground=box(1000,4,.2,M.ground);ground.position.set(0,groundY-2.15,-1);ground.receiveShadow=true;scene.add(ground);
-const track=box(1000,.14,.22,M.road);track.position.set(0,groundY-.06,0);scene.add(track);
-const edge=box(1000,.045,.12,M.edge);edge.position.set(0,groundY+.04,.1);scene.add(edge);
-for(let i=0,n=Math.ceil((viewW+6)/3);i<n;i++){const mark=box(1.5,.07,.05,material(i%2?0x50617f:0x54dfff,i%2?0:0x19bfff,.9));mark.position.set(-viewW/2+i*3,groundY-.27,.2);scene.add(mark);roadMarks.push(mark)}
-resize();createBackdrop();createPlayer();window.addEventListener('resize',resize);window.addEventListener('keydown',onKey);document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();action(b.dataset.action)}));startButton.addEventListener('click',startGame);animate()}
-function createBackdrop(){for(let i=0;i<48;i++){const s=new THREE.Mesh(new THREE.CircleGeometry(.018+Math.random()*.035,6),material(0xa9dfff,0x74bfff,1.3));s.position.set((Math.random()-.5)*viewW*1.5,1+Math.random()*4,-8-Math.random()*10);scene.add(s);stars.push(s)}
-for(let side=0;side<24;side++){const w=1.6+Math.random()*2.7,h=2.3+Math.random()*5.5,g=new THREE.Group();const b=box(w,h,1,material([0x111b34,0x17233c,0x201b3a,0x112838][Math.floor(Math.random()*4)]));b.position.y=h/2;g.add(b);const stripe=box(.055,h*.75,.035,side%2?M.pink:M.cyan);stripe.position.set(w*.28,h*.53,.54);g.add(stripe);for(let j=0;j<4;j++){const win=box(.12,.12,.04,j%2?M.cyan:M.pink);win.position.set(-w*.25+(j%2)*.35,h*.33+Math.floor(j/2)*.42,.55);g.add(win)}g.position.set(-viewW/2+side*5,groundY-.1,-4);g.userData={speed:.22+Math.random()*.18};scene.add(g);buildings.push(g)}}
-function createPlayer(){player=new THREE.Group();player.position.set(runnerX,groundY,.8);scene.add(player);body=new THREE.Mesh(new THREE.CapsuleGeometry(.35,.72,4,8),M.suit);body.position.set(0,1.05,0);body.castShadow=true;player.add(body);head=new THREE.Mesh(new THREE.SphereGeometry(.27,14,10),M.skin);head.position.set(.04,1.78,.04);head.castShadow=true;player.add(head);const visor=box(.42,.12,.08,M.cyan);visor.position.set(.08,1.8,.27);player.add(visor);const jacket=box(.36,.43,.08,M.pink);jacket.position.set(.13,1.13,.28);player.add(jacket);
-for(const side of [-1,1]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.095,.44,3,7),M.suit);arm.position.set(side*.4,1.02,.02);arm.rotation.z=side*-.27;arm.castShadow=true;player.add(arm);arms.push(arm);const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.12,.39,3,7),material(0x121a2b));leg.position.set(side*.16,.4,.03);player.add(leg);const shoe=box(.32,.14,.34,M.cyan);shoe.position.set(side*.17,.11,.15);player.add(shoe)}const light=new THREE.PointLight(0x42eaff,2.2,3);light.position.set(.2,1,.4);player.add(light)}
-function addObstacle(kind,x){const g=new THREE.Group();g.position.set(x,groundY,.5);if(kind==='crate'){const block=box(1.05,1.25,.7,M.orange);block.position.y=.62;block.castShadow=true;g.add(block);const stripe=box(1.08,.15,.73,M.gold);stripe.position.set(0,.65,.38);g.add(stripe);g.userData={kind,half:.53}}
-else if(kind==='hurdle'){const bar=box(1.4,.38,.42,M.cyan);bar.position.set(0,.2,.25);bar.castShadow=true;g.add(bar);for(const x2 of [-.55,.55]){const foot=box(.13,.3,.36,M.orange);foot.position.set(x2,.15,.1);g.add(foot)}g.userData={kind,half:.72}}
-else{const beam=box(1.55,.22,.42,M.orange);beam.position.set(0,1.45,.12);g.add(beam);for(const x2 of [-.68,.68]){const post=box(.11,1.5,.32,M.cyan);post.position.set(x2,.75,.1);g.add(post)}g.userData={kind,half:.8}}
-scene.add(g);obstacles.push(g)}
-function addCoin(x,y){const g=new THREE.Group();g.position.set(x,y,.7);const ring=new THREE.Mesh(new THREE.TorusGeometry(.25,.075,7,16),M.gold);ring.castShadow=true;g.add(ring);const core=new THREE.Mesh(new THREE.CircleGeometry(.11,8),M.white);core.position.z=.04;g.add(core);g.userData={phase:Math.random()*6.28};scene.add(g);coins.push(g)}
-function resize(){if(!camera||!renderer)return;const aspect=innerWidth/innerHeight;viewW=VIEW_H*aspect;camera.left=-viewW/2;camera.right=viewW/2;camera.top=VIEW_H/2;camera.bottom=-VIEW_H/2;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);runnerX=-Math.min(viewW*.27,5);if(player&&!running)player.position.x=runnerX;roadMarks.forEach((m,i)=>{if(!running)m.position.x=-viewW/2+i*3})}
-function startGame(){if(!auth.currentUser){authMessage.textContent='請先使用 Google 登入以開始遊戲。';return}hasEnded=false;obstacles.forEach(o=>scene.remove(o));coins.forEach(c=>scene.remove(c));obstacles=[];coins=[];elapsed=distance=collected=score=0;speed=9.5;jumpY=jumpVelocity=slideTimer=0;spawnTimer=.9;running=true;player.position.set(runnerX,groundY,.8);overlay.classList.add('hidden');scoreEl.textContent=fmt(0);coinsEl.innerHTML='0 <small>◆</small>';clock.getDelta()}
-function endGame(){running=false;hasEnded=true;if(score>best){best=score;localStorage.setItem('neon-run-best',best);bestEl.textContent=fmt(best)}panelTitle.textContent='跑得漂亮';panelText.innerHTML=`本次得分 <strong style="color:#71f4ff">${fmt(score)}</strong><br>收集了 ${collected} 枚能量晶片，再挑戰一次吧。`;startButton.textContent='再跑一次';overlay.classList.remove('hidden')}
-function action(type){if(!running)return;if(type==='jump'&&jumpY<=.02&&slideTimer<=0)jumpVelocity=10.2;if(type==='slide'&&jumpY<.4)slideTimer=.72}
-function onKey(e){if(['ArrowUp','ArrowDown',' ','Space'].includes(e.key))e.preventDefault();if(e.repeat)return;if(e.key==='ArrowUp'||e.key===' '||e.key.toLowerCase()==='w')action('jump');if(e.key==='ArrowDown'||e.key.toLowerCase()==='s')action('slide')}
-function update(dt){elapsed+=dt;speed=Math.min(16,9.5+elapsed*.18);distance+=speed*dt;score=Math.floor(distance*10)+collected*100;scoreEl.textContent=fmt(score);coinsEl.innerHTML=`${collected} <small>◆</small>`;
-jumpY+=jumpVelocity*dt;if(jumpY>0||jumpVelocity>0){jumpVelocity-=24*dt;if(jumpY<0){jumpY=0;jumpVelocity=0}}slideTimer=Math.max(0,slideTimer-dt);player.position.y=groundY+jumpY;const duck=slideTimer>0;body.scale.y=duck?.56:1;body.position.y=duck?.7:1.05;head.position.y=duck?1.22:1.78;arms.forEach((a,i)=>a.rotation.z=(i?-.25:.25)+Math.sin(elapsed*15+i*Math.PI)*.24);
-for(const m of roadMarks){m.position.x-=speed*dt;if(m.position.x<-viewW/2-2)m.position.x+=viewW+6}
-for(const b of buildings){b.position.x-=speed*dt*b.userData.speed;if(b.position.x<-viewW/2-5)b.position.x+=viewW+10}
-for(const s of stars){s.position.x-=speed*dt*.06;if(s.position.x<-viewW/2-1)s.position.x=viewW/2+1}
-spawnTimer-=dt;if(spawnTimer<=0){const x=viewW/2+1.2,roll=Math.random();addObstacle(roll<.48?'crate':roll<.75?'hurdle':'gate',x);if(Math.random()<.62){const y=groundY+1.2+Math.random()*1.5;for(let i=0;i<4;i++)addCoin(x+2+i*.72,y+Math.sin(i*.65)*.25)}spawnTimer=Math.max(.82,1.55-Math.max(0,speed-9.5)*.035+Math.random()*.55)}
-for(const o of obstacles){o.position.x-=speed*dt;if(!o.userData.hit&&Math.abs(o.position.x-runnerX)<o.userData.half+.55){const kind=o.userData.kind,safe=kind==='gate'?duck:kind==='hurdle'?jumpY>.72:jumpY>1.18;if(!safe){endGame();return}o.userData.hit=true}}
-for(const c of coins){c.position.x-=speed*dt;c.rotation.y+=dt*2.7;c.position.y+=Math.sin(elapsed*4+c.userData.phase)*dt*.14;if(!c.userData.hit&&Math.abs(c.position.x-runnerX)<.58&&Math.abs(c.position.y-(groundY+jumpY+1.15))<1.45){c.userData.hit=true;collected++;scene.remove(c)}}
-obstacles=obstacles.filter(o=>{if(o.position.x<-viewW/2-3){scene.remove(o);return false}return true});coins=coins.filter(c=>{if(c.userData.hit||c.position.x<-viewW/2-3){scene.remove(c);return false}return true})}
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);if(running)update(dt);else if(player)player.position.y=groundY+Math.sin(performance.now()*.002)*.035;renderer.render(scene,camera)}
-init();
-</script>
+  <section id="loginGate" class="login-screen" aria-labelledby="loginTitle">
+    <div class="login-card">
+      <div class="brand-mark" aria-hidden="true">✓</div>
+      <h1 id="loginTitle">拾記</h1>
+      <p class="subtitle">把想做的事一件件寫下來。<br>登入後開始整理你的每日待辦。</p>
+      <button id="googleSignInButton" class="google-button" type="button"><span class="google-g" aria-hidden="true">G</span>使用 Google 帳號登入</button>
+      <p id="loginMessage" class="login-hint" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <div id="appShell" class="app-shell" hidden>
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">✓</span><span>拾記<small>DAILY NOTEBOOK</small></span></div>
+      <div class="account"><img id="userAvatar" class="avatar" alt="" hidden><span id="userEmail" class="account-email"></span><button id="signOutButton" class="text-button" type="button">登出</button></div>
+    </header>
+    <div class="layout">
+      <aside class="sidebar" aria-label="待辦篩選">
+        <button id="focusAddButton" class="new-task-link" type="button"><span class="plus">＋</span>新增待辦</button>
+        <div>
+          <div class="nav-label">檢視</div>
+          <nav id="filterNav" class="nav-list">
+            <button class="nav-item active" type="button" data-filter="all"><span class="nav-label-text"><span class="nav-icon">▦</span>全部待辦</span><span id="countAll" class="nav-count">0</span></button>
+            <button class="nav-item" type="button" data-filter="today"><span class="nav-label-text"><span class="nav-icon">◷</span>今天到期</span><span id="countToday" class="nav-count">0</span></button>
+            <button class="nav-item" type="button" data-filter="upcoming"><span class="nav-label-text"><span class="nav-icon">▧</span>之後處理</span><span id="countUpcoming" class="nav-count">0</span></button>
+            <button class="nav-item" type="button" data-filter="done"><span class="nav-label-text"><span class="nav-icon">✓</span>已完成</span><span id="countDone" class="nav-count">0</span></button>
+          </nav>
+        </div>
+        <div class="sidebar-note"><strong>留一點空間給自己</strong>一件一件完成，就已經很棒了。</div>
+      </aside>
+
+      <main class="main">
+        <section class="page-heading">
+          <div><p class="eyebrow">MY SPACE</p><h1 id="pageTitle">全部待辦</h1><p id="dateLine" class="date-line"></p></div>
+          <span id="taskTotal" class="task-total"></span>
+        </section>
+
+        <form id="quickAddForm" class="capture-card">
+          <div class="capture-title"><span class="plus" aria-hidden="true" style="color:#26745c">＋</span><input id="quickTitle" name="title" maxlength="140" placeholder="記下一件待辦…" aria-label="待辦事項標題" required></div>
+          <div class="capture-fields">
+            <input id="quickNote" name="note" maxlength="1000" placeholder="補充備註（選填）" aria-label="備註">
+            <input id="quickDue" name="dueDate" type="date" aria-label="到期日">
+            <select id="quickPriority" name="priority" aria-label="優先程度"><option value="normal">一般優先</option><option value="high">高優先</option><option value="low">低優先</option></select>
+            <button class="add-button" type="submit">加入待辦</button>
+          </div>
+        </form>
+
+        <div class="toolbar">
+          <div class="toolbar-left"><h2 id="listHeading">待辦清單</h2><button id="clearCompletedButton" class="clear-button" type="button" hidden>清除已完成</button></div>
+          <label class="search-box"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="搜尋待辦與備註" aria-label="搜尋待辦與備註"></label>
+        </div>
+        <div id="taskList" class="task-list" aria-live="polite"></div>
+        <p class="save-status"><span class="save-dot" aria-hidden="true"></span><span id="saveStatus">待辦會儲存在此裝置</span></p>
+      </main>
+    </div>
+  </div>
+
+  <div id="editModal" class="modal-backdrop" hidden>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="editHeading">
+      <div class="modal-head"><h2 id="editHeading">編輯待辦</h2><button id="closeEditButton" class="modal-close" type="button" aria-label="關閉">×</button></div>
+      <form id="editForm" class="edit-form">
+        <input id="editId" type="hidden">
+        <label>待辦事項<input id="editTitle" maxlength="140" required></label>
+        <label>備註<textarea id="editNote" maxlength="1000" placeholder="補充細節或想法"></textarea></label>
+        <label>到期日<input id="editDue" type="date"></label>
+        <label>優先程度<select id="editPriority"><option value="normal">一般優先</option><option value="high">高優先</option><option value="low">低優先</option></select></label>
+        <div class="modal-actions"><button id="cancelEditButton" class="cancel-button" type="button">取消</button><button class="save-button" type="submit">儲存變更</button></div>
+      </form>
+    </section>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js';
+    import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js';
+
+    const firebaseConfig = {
+      apiKey: 'AIzaSyD6RdCg6vTumG3UfoIlYCELCIZDpNBkGuE',
+      authDomain: 'code2026-403d8.firebaseapp.com',
+      projectId: 'code2026-403d8',
+      storageBucket: 'code2026-403d8.firebasestorage.app',
+      messagingSenderId: '536806938711',
+      appId: '1:536806938711:web:96c4eb16a664bb1c13eb12'
+    };
+    const auth = getAuth(initializeApp(firebaseConfig));
+    const googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+    const $ = (selector) => document.querySelector(selector);
+    const loginGate = $('#loginGate');
+    const appShell = $('#appShell');
+    const loginMessage = $('#loginMessage');
+    const quickAddForm = $('#quickAddForm');
+    const taskList = $('#taskList');
+    const searchInput = $('#searchInput');
+    const editModal = $('#editModal');
+    const toast = $('#toast');
+    const STORAGE_PREFIX = 'shiji-notebook-v1:';
+    const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    let currentUser = null;
+    let tasks = [];
+    let activeFilter = 'all';
+    let toastTimer;
+
+    const filterTitles = { all: '全部待辦', today: '今天到期', upcoming: '之後處理', done: '已完成' };
+    const priorityLabels = { high: '高優先', normal: '一般', low: '低優先' };
+    const localDateLine = new Intl.DateTimeFormat('zh-TW', { dateStyle: 'full' }).format(new Date());
+    $('#dateLine').textContent = localDateLine;
+
+    function storageKey() { return `${STORAGE_PREFIX}${currentUser.uid}`; }
+    function loadTasks() {
+      try {
+        const saved = localStorage.getItem(storageKey());
+        const parsed = saved ? JSON.parse(saved) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        console.error('Unable to read notebook data:', error);
+        return [];
+      }
+    }
+    function saveTasks() {
+      try {
+        localStorage.setItem(storageKey(), JSON.stringify(tasks));
+        $('#saveStatus').textContent = '已儲存在此裝置';
+      } catch (error) {
+        console.error('Unable to save notebook data:', error);
+        $('#saveStatus').textContent = '儲存失敗，請確認瀏覽器儲存空間';
+        showToast('儲存失敗，請稍後再試');
+      }
+    }
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+    function countTasks() {
+      return {
+        all: tasks.filter(task => !task.done).length,
+        today: tasks.filter(task => !task.done && task.dueDate === today).length,
+        upcoming: tasks.filter(task => !task.done && task.dueDate && task.dueDate > today).length,
+        done: tasks.filter(task => task.done).length
+      };
+    }
+    function getVisibleTasks() {
+      const query = searchInput.value.trim().toLocaleLowerCase();
+      return tasks.filter(task => {
+        const matchesFilter = activeFilter === 'all' ? !task.done
+          : activeFilter === 'today' ? !task.done && task.dueDate === today
+          : activeFilter === 'upcoming' ? !task.done && task.dueDate && task.dueDate > today
+          : task.done;
+        const text = `${task.title} ${task.note || ''}`.toLocaleLowerCase();
+        return matchesFilter && (!query || text.includes(query));
+      }).sort((a, b) => {
+        if (activeFilter === 'done') return (b.completedAt || 0) - (a.completedAt || 0);
+        if (a.dueDate && b.dueDate && a.dueDate !== b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+        if (a.dueDate && !b.dueDate) return -1;
+        if (!a.dueDate && b.dueDate) return 1;
+        return (b.createdAt || 0) - (a.createdAt || 0);
+      });
+    }
+    function makeChip(text, className = '') {
+      const chip = document.createElement('span');
+      chip.className = `chip ${className}`.trim();
+      chip.textContent = text;
+      return chip;
+    }
+    function renderTask(task) {
+      const card = document.createElement('article');
+      card.className = `task-card${task.done ? ' completed' : ''}`;
+      const checkbox = document.createElement('input');
+      checkbox.className = 'task-check';
+      checkbox.type = 'checkbox';
+      checkbox.checked = Boolean(task.done);
+      checkbox.dataset.action = 'toggle';
+      checkbox.dataset.id = task.id;
+      checkbox.setAttribute('aria-label', task.done ? '標記為未完成' : '標記為已完成');
+      const body = document.createElement('div');
+      body.className = 'task-body';
+      const title = document.createElement('h3');
+      title.className = 'task-title';
+      title.textContent = task.title;
+      body.append(title);
+      if (task.note) {
+        const note = document.createElement('p');
+        note.className = 'task-note';
+        note.textContent = task.note;
+        body.append(note);
+      }
+      const meta = document.createElement('div');
+      meta.className = 'task-meta';
+      if (task.dueDate) {
+        const due = new Date(`${task.dueDate}T00:00:00`);
+        const label = new Intl.DateTimeFormat('zh-TW', { month: 'numeric', day: 'numeric' }).format(due);
+        const dueClass = !task.done && task.dueDate < today ? 'overdue' : !task.done && task.dueDate === today ? 'due-soon' : '';
+        meta.append(makeChip(`${dueClass === 'overdue' ? '逾期 · ' : dueClass ? '今天 · ' : '到期 · '}${label}`, dueClass));
+      }
+      meta.append(makeChip(priorityLabels[task.priority] || '一般', `priority-${task.priority || 'normal'}`));
+      body.append(meta);
+
+      const actions = document.createElement('div');
+      actions.className = 'task-actions';
+      const edit = document.createElement('button');
+      edit.className = 'icon-button';
+      edit.type = 'button';
+      edit.dataset.action = 'edit';
+      edit.dataset.id = task.id;
+      edit.setAttribute('aria-label', '編輯待辦');
+      edit.title = '編輯';
+      edit.textContent = '✎';
+      const remove = document.createElement('button');
+      remove.className = 'icon-button delete';
+      remove.type = 'button';
+      remove.dataset.action = 'delete';
+      remove.dataset.id = task.id;
+      remove.setAttribute('aria-label', '刪除待辦');
+      remove.title = '刪除';
+      remove.textContent = '×';
+      actions.append(edit, remove);
+      card.append(checkbox, body, actions);
+      return card;
+    }
+    function render() {
+      const counts = countTasks();
+      $('#countAll').textContent = counts.all;
+      $('#countToday').textContent = counts.today;
+      $('#countUpcoming').textContent = counts.upcoming;
+      $('#countDone').textContent = counts.done;
+      $('#pageTitle').textContent = filterTitles[activeFilter];
+      $('#listHeading').textContent = activeFilter === 'all' ? '待辦清單' : filterTitles[activeFilter];
+      $('#taskTotal').textContent = `${counts.all} 件未完成`;
+      $('#clearCompletedButton').hidden = counts.done === 0;
+      document.querySelectorAll('[data-filter]').forEach(button => button.classList.toggle('active', button.dataset.filter === activeFilter));
+      taskList.replaceChildren();
+      const visible = getVisibleTasks();
+      if (!visible.length) {
+        const empty = document.createElement('section');
+        empty.className = 'empty-state';
+        const icon = document.createElement('div');
+        icon.className = 'empty-icon';
+        icon.textContent = activeFilter === 'done' ? '✓' : '✦';
+        const heading = document.createElement('h3');
+        heading.textContent = searchInput.value ? '沒有找到符合的待辦' : activeFilter === 'done' ? '還沒有完成的事項' : activeFilter === 'today' ? '今天沒有到期事項' : activeFilter === 'upcoming' ? '目前沒有排定日期的待辦' : '清單還很清爽';
+        const detail = document.createElement('p');
+        detail.textContent = searchInput.value ? '試試其他關鍵字。' : activeFilter === 'all' ? '把待辦寫下來，讓思緒輕一點。' : '有新的事情時，再記在這裡。';
+        empty.append(icon, heading, detail);
+        taskList.append(empty);
+      } else {
+        visible.forEach(task => taskList.append(renderTask(task)));
+      }
+    }
+    function addTask(values) {
+      const title = values.title.trim();
+      if (!title) return;
+      tasks.push({ id: crypto.randomUUID(), title, note: values.note.trim(), dueDate: values.dueDate, priority: values.priority || 'normal', done: false, createdAt: Date.now(), completedAt: 0 });
+      saveTasks();
+      render();
+      showToast('已加入待辦');
+    }
+    function openEditor(task) {
+      $('#editId').value = task.id;
+      $('#editTitle').value = task.title;
+      $('#editNote').value = task.note || '';
+      $('#editDue').value = task.dueDate || '';
+      $('#editPriority').value = task.priority || 'normal';
+      editModal.hidden = false;
+      $('#editTitle').focus();
+    }
+
+    $('#googleSignInButton').addEventListener('click', async () => {
+      const button = $('#googleSignInButton');
+      button.disabled = true;
+      loginMessage.textContent = '正在開啟 Google 登入…';
+      try {
+        await signInWithPopup(auth, googleProvider);
+      } catch (error) {
+        console.error('Google sign-in failed:', error);
+        const messages = {
+          'auth/popup-closed-by-user': '你已關閉登入視窗。',
+          'auth/popup-blocked': '瀏覽器封鎖了登入視窗，請允許彈出式視窗後重試。',
+          'auth/unauthorized-domain': '此網站網域尚未加入 Firebase 授權網域。'
+        };
+        loginMessage.textContent = messages[error.code] || '登入失敗，請稍後再試。';
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    $('#signOutButton').addEventListener('click', async () => {
+      try { await signOut(auth); } catch (error) { console.error('Sign-out failed:', error); showToast('登出失敗，請稍後再試'); }
+    });
+    onAuthStateChanged(auth, user => {
+      currentUser = user;
+      loginGate.hidden = Boolean(user);
+      appShell.hidden = !user;
+      if (!user) { tasks = []; taskList.replaceChildren(); return; }
+      $('#userEmail').textContent = user.displayName || user.email || 'Google 使用者';
+      const avatar = $('#userAvatar');
+      if (user.photoURL) { avatar.src = user.photoURL; avatar.hidden = false; }
+      else { avatar.removeAttribute('src'); avatar.hidden = true; }
+      $('#saveStatus').textContent = '待辦會儲存在此裝置';
+      tasks = loadTasks();
+      render();
+    });
+
+    $('#filterNav').addEventListener('click', event => {
+      const button = event.target.closest('[data-filter]');
+      if (!button) return;
+      activeFilter = button.dataset.filter;
+      render();
+    });
+    $('#focusAddButton').addEventListener('click', () => $('#quickTitle').focus());
+    quickAddForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const data = new FormData(quickAddForm);
+      addTask({ title: data.get('title'), note: data.get('note'), dueDate: data.get('dueDate'), priority: data.get('priority') });
+      quickAddForm.reset();
+      $('#quickTitle').focus();
+    });
+    searchInput.addEventListener('input', render);
+    taskList.addEventListener('change', event => {
+      const checkbox = event.target.closest('[data-action="toggle"]');
+      if (!checkbox) return;
+      const task = tasks.find(item => item.id === checkbox.dataset.id);
+      if (!task) return;
+      task.done = checkbox.checked;
+      task.completedAt = task.done ? Date.now() : 0;
+      saveTasks();
+      render();
+    });
+    taskList.addEventListener('click', event => {
+      const button = event.target.closest('[data-action="edit"],[data-action="delete"]');
+      if (!button) return;
+      const task = tasks.find(item => item.id === button.dataset.id);
+      if (!task) return;
+      if (button.dataset.action === 'edit') openEditor(task);
+      else if (confirm(`確定刪除「${task.title}」嗎？`)) {
+        tasks = tasks.filter(item => item.id !== task.id);
+        saveTasks();
+        render();
+        showToast('已刪除待辦');
+      }
+    });
+    $('#editForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const task = tasks.find(item => item.id === $('#editId').value);
+      if (!task) return;
+      task.title = $('#editTitle').value.trim();
+      task.note = $('#editNote').value.trim();
+      task.dueDate = $('#editDue').value;
+      task.priority = $('#editPriority').value;
+      saveTasks();
+      render();
+      editModal.hidden = true;
+      showToast('已儲存變更');
+    });
+    $('#cancelEditButton').addEventListener('click', () => { editModal.hidden = true; });
+    $('#closeEditButton').addEventListener('click', () => { editModal.hidden = true; });
+    editModal.addEventListener('click', event => { if (event.target === editModal) editModal.hidden = true; });
+    $('#clearCompletedButton').addEventListener('click', () => {
+      const completedCount = tasks.filter(task => task.done).length;
+      if (!completedCount || !confirm(`確定清除 ${completedCount} 件已完成事項嗎？`)) return;
+      tasks = tasks.filter(task => !task.done);
+      saveTasks();
+      render();
+      showToast('已清除完成事項');
+    });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') editModal.hidden = true; });
+  </script>
 </body>
 </html>
-
-
