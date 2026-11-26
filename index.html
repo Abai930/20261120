@@ -153,46 +153,117 @@
       });
     }
 
-    function offsetFootprintRing(ring, offsetMeters) {
-      const vertices = ring.slice(0, -1);
-      if (vertices.length < 4) return ring;
-      const latitude = vertices.reduce((sum, point) => sum + point[1], 0) / vertices.length;
-      const metersPerLongitude = 111320 * Math.cos(latitude * Math.PI / 180);
-      const points = vertices.map(([longitude, lat]) => [longitude * metersPerLongitude, lat * 111320]);
-      const center = points.reduce((sum, point) => [sum[0] + point[0] / points.length, sum[1] + point[1] / points.length], [0, 0]);
-      const averageRadius = points.reduce((sum, point) => sum + Math.hypot(point[0] - center[0], point[1] - center[1]) / points.length, 0);
-      if (!averageRadius) return ring;
-      const safeOffset = Math.max(-averageRadius * 0.32, Math.min(offsetMeters, averageRadius * 0.32));
-      const scale = (averageRadius + safeOffset) / averageRadius;
-      const output = points.map(([x, y]) => [(center[0] + (x - center[0]) * scale) / metersPerLongitude, (center[1] + (y - center[1]) * scale) / 111320]);
-      output.push(output[0]);
-      return output;
-    }
+    function createBuildingSilhouetteLayer(features) {
+      const buildings = [];
+      const toMercator = ([longitude, latitude], altitude) => {
+        const coordinate = maplibregl.MercatorCoordinate.fromLngLat([longitude, latitude], altitude);
+        return [coordinate.x, coordinate.y, coordinate.z];
+      };
+      const terrainElevation = (coordinate) => {
+        if (typeof map.queryTerrainElevation !== 'function') return 0;
+        const elevation = map.queryTerrainElevation(coordinate, { exaggerated: true });
+        return Number.isFinite(elevation) ? elevation : 0;
+      };
 
-    function signedRingArea(ring) {
-      let area = 0;
-      for (let i = 0; i < ring.length - 1; i++) area += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1];
-      return area / 2;
-    }
-
-    function createBuildingOutlineFeatures(features) {
-      const outlines = [];
       features.forEach((feature) => {
         const polygons = feature.geometry.type === 'Polygon' ? [feature.geometry.coordinates] : feature.geometry.coordinates;
         polygons.forEach((polygon) => {
-          const outer = offsetFootprintRing(polygon[0], 0.45);
-          const inner = offsetFootprintRing(polygon[0], -0.8);
-          if (Math.sign(signedRingArea(outer)) < 0) outer.reverse();
-          if (Math.sign(signedRingArea(inner)) > 0) inner.reverse();
-          outlines.push({
-            type: 'Feature',
-            id: feature.id,
-            properties: { kind: 'building-outline', mapHeight: Number(feature.properties.mapHeight) + 0.7 },
-            geometry: { type: 'Polygon', coordinates: [outer, inner] }
+          polygon.forEach((ring) => {
+            if (ring.length < 4) return;
+            const vertices = ring.slice(0, -1);
+            const elevations = vertices.map(terrainElevation);
+            const ground = vertices.map((coordinate, index) => toMercator(coordinate, elevations[index]));
+            const height = Number(feature.properties.mapHeight) || 8;
+            const roof = vertices.map((coordinate, index) => toMercator(coordinate, elevations[index] + height));
+            const center = [0, 0, 0];
+            ground.concat(roof).forEach((point) => {
+              center[0] += point[0] / (ground.length + roof.length);
+              center[1] += point[1] / (ground.length + roof.length);
+              center[2] += point[2] / (ground.length + roof.length);
+            });
+            buildings.push({ ground, roof, center });
           });
         });
       });
-      return { type: 'FeatureCollection', features: outlines };
+
+      const convexHull = (points) => {
+        const sorted = points.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+        if (sorted.length < 3) return sorted;
+        const cross = (origin, a, b) => (a[0] - origin[0]) * (b[1] - origin[1]) - (a[1] - origin[1]) * (b[0] - origin[0]);
+        const lower = [];
+        const upper = [];
+        sorted.forEach((point) => {
+          while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) lower.pop();
+          lower.push(point);
+        });
+        sorted.slice().reverse().forEach((point) => {
+          while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) upper.pop();
+          upper.push(point);
+        });
+        lower.pop();
+        upper.pop();
+        return lower.concat(upper);
+      };
+
+      return {
+        id: 'campus-silhouette-outline',
+        type: 'custom',
+        renderingMode: '3d',
+        onAdd(_map) {
+          this.canvas = document.createElement('canvas');
+          this.canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1';
+          this.context = this.canvas.getContext('2d');
+          _map.getCanvasContainer().appendChild(this.canvas);
+        },
+        render(_gl, matrix) {
+          const width = map.getCanvas().width;
+          const height = map.getCanvas().height;
+          if (this.canvas.width !== width || this.canvas.height !== height) {
+            this.canvas.width = width;
+            this.canvas.height = height;
+          }
+          const context = this.context;
+          context.setTransform(1, 0, 0, 1, 0, 0);
+          context.clearRect(0, 0, width, height);
+          const bearing = map.getBearing() * Math.PI / 180;
+          const pitch = map.getPitch() * Math.PI / 180;
+          const cameraX = -Math.sin(bearing) * Math.sin(pitch);
+          const cameraY = Math.cos(bearing) * Math.sin(pitch);
+          const cameraZ = Math.cos(pitch);
+          const project = ([x, y, z]) => {
+            const clipX = matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12];
+            const clipY = matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13];
+            const clipW = matrix[3] * x + matrix[7] * y + matrix[11] * z + matrix[15];
+            if (clipW <= 0) return null;
+            return [(clipX / clipW * 0.5 + 0.5) * width, (1 - (clipY / clipW * 0.5 + 0.5)) * height];
+          };
+          context.strokeStyle = '#171b18';
+          context.lineWidth = Math.max(1.5, window.devicePixelRatio * 1.2);
+          context.lineJoin = 'round';
+          context.lineCap = 'round';
+          const projectedBuildings = buildings.map(({ ground, roof, center }) => {
+            const points = ground.concat(roof).map(project).filter(Boolean);
+            return { hull: convexHull(points), depth: center[0] * cameraX + center[1] * cameraY + center[2] * cameraZ };
+          }).filter(({ hull }) => hull.length >= 3).sort((a, b) => a.depth - b.depth);
+          projectedBuildings.forEach(({ hull }) => {
+            context.beginPath();
+            context.moveTo(hull[0][0], hull[0][1]);
+            hull.slice(1).forEach(([x, y]) => context.lineTo(x, y));
+            context.closePath();
+            context.globalCompositeOperation = 'destination-out';
+            context.fill();
+            context.globalCompositeOperation = 'source-over';
+            context.beginPath();
+            context.moveTo(hull[0][0], hull[0][1]);
+            hull.slice(1).forEach(([x, y]) => context.lineTo(x, y));
+            context.closePath();
+            context.stroke();
+          });
+        },
+        onRemove() {
+          this.canvas?.remove();
+        }
+      };
     }
 
     function centerOf(feature) {
@@ -372,7 +443,6 @@
           gateCoordinates = gates.map((feature) => feature.geometry.coordinates);
           campusBounds = calculateCampusBounds(data.features.filter((feature) => feature.properties.kind !== 'gate'));
           setBuildingHeights(buildingFeatures);
-          const buildingOutlines = createBuildingOutlineFeatures(buildingFeatures);
           map.addSource('campus-terrain', {
             type: 'raster-dem',
             tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
@@ -393,21 +463,10 @@
             'atmosphere-blend': 0.58
           });
           map.addSource('campus', { type: 'geojson', data, attribution: '© OpenStreetMap contributors' });
-          map.addSource('campus-building-edges', { type: 'geojson', data: buildingOutlines });
           map.addLayer({ id: 'campus-green', source: 'campus', type: 'fill', filter: ['==', ['get', 'kind'], 'green'], paint: { 'fill-color': '#f1f2ef', 'fill-opacity': 0.92 } });
           map.addLayer({ id: 'campus-water', source: 'campus', type: 'fill', filter: ['==', ['get', 'kind'], 'water'], paint: { 'fill-color': '#e8eef0', 'fill-opacity': 0.95 } });
           map.addLayer({ id: 'campus-road-casing', source: 'campus', type: 'line', filter: ['==', ['get', 'kind'], 'road'], layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 4.8, 18, 9.4], 'line-opacity': 1 } });
           map.addLayer({ id: 'campus-roads', source: 'campus', type: 'line', filter: ['==', ['get', 'kind'], 'road'], layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#cbd0cc', 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 3.2, 18, 7.2], 'line-opacity': 1 } });
-          map.addLayer({
-            id: 'campus-building-edges', source: 'campus-building-edges', type: 'fill-extrusion',
-            paint: {
-              'fill-extrusion-color': '#171b18',
-              'fill-extrusion-height': ['to-number', ['get', 'mapHeight']],
-              'fill-extrusion-base': 0,
-              'fill-extrusion-vertical-gradient': true,
-              'fill-extrusion-opacity': 1
-            }
-          });
           map.addLayer({
             id: 'campus-buildings', source: 'campus', type: 'fill-extrusion', filter: ['==', ['get', 'kind'], 'building'],
             paint: {
@@ -418,16 +477,15 @@
               'fill-extrusion-opacity': 0.98
             }
           });
-          map.addLayer({
-            id: 'campus-building-outline', source: 'campus', type: 'line', filter: ['==', ['get', 'kind'], 'building'],
-            layout: { 'line-join': 'round', 'line-cap': 'round' },
-            paint: { 'line-color': '#252a27', 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 1.2, 18, 2.1], 'line-opacity': 0.96 }
-          });
           addGateMarkers(gates);
           map.on('click', 'campus-buildings', (event) => { if (event.features && event.features[0]) selectBuilding(event.features[0], false); });
           map.on('mouseenter', 'campus-buildings', () => { map.getCanvas().style.cursor = 'pointer'; });
           map.on('mouseleave', 'campus-buildings', () => { map.getCanvas().style.cursor = ''; });
           fitCampus();
+          map.once('idle', () => {
+            try { map.addLayer(createBuildingSilhouetteLayer(buildingFeatures)); }
+            catch (error) { console.error('Building silhouette outline failed:', error); }
+          });
           mapLoading.hidden = true;
         } catch (error) {
           console.error('Campus map failed to load:', error);
