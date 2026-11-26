@@ -76,6 +76,12 @@
     const loginGate = $('#loginGate');
     const appShell = $('#appShell');
     const mapLoading = $('#mapLoading');
+    const mapCompass = $('#mapCompass');
+    const mapCompassRose = $('#mapCompassRose');
+    const compassDirections = ['北', '東北', '東', '東南', '南', '西南', '西', '西北'];
+    const compassAriaLabels = compassDirections.map((direction) => `方位指針：北方位於${direction}方`);
+    const compassTransforms = new Array(3600);
+    for (let index = 0; index < compassTransforms.length; index++) compassTransforms[index] = `rotate(${index / 10}deg)`;
     let map;
     let mapStarted = false;
     let buildingFeatures = [];
@@ -84,6 +90,8 @@
     let selectedId;
     let selectedPopup;
     let threeDimensional = true;
+    let lastCompassAngle = -1;
+    let lastCompassDirection = -1;
 
     function getFootprintArea(feature) {
       const ring = feature.geometry.coordinates && feature.geometry.coordinates[0];
@@ -263,32 +271,105 @@
 
     function createBuildingSilhouetteLayer(features) {
       const buildings = [];
-      const toMercator = ([longitude, latitude], altitude) => {
-        const coordinate = maplibregl.MercatorCoordinate.fromLngLat([longitude, latitude], altitude);
-        return [coordinate.x, coordinate.y, coordinate.z];
-      };
       const terrainElevation = (coordinate) => {
         if (typeof map.queryTerrainElevation !== 'function') return 0;
         const elevation = map.queryTerrainElevation(coordinate, { exaggerated: true });
         return Number.isFinite(elevation) ? elevation : 0;
       };
+      const projectRing = (ring, roof, matrix, width, height) => {
+        const points = ring.points;
+        const screen = ring.screen;
+        const base = roof ? ring.count * 3 : 0;
+        let valid = true;
+        for (let index = 0; index < ring.count; index++) {
+          const offset = base + index * 3;
+          const x = points[offset];
+          const y = points[offset + 1];
+          const z = points[offset + 2];
+          const clipX = matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12];
+          const clipY = matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13];
+          const clipW = matrix[3] * x + matrix[7] * y + matrix[11] * z + matrix[15];
+          const screenOffset = index * 2;
+          if (clipW <= 0) {
+            screen[screenOffset] = NaN;
+            screen[screenOffset + 1] = NaN;
+            valid = false;
+            continue;
+          }
+          screen[screenOffset] = (clipX / clipW * 0.5 + 0.5) * width;
+          screen[screenOffset + 1] = (1 - (clipY / clipW * 0.5 + 0.5)) * height;
+        }
+        return valid;
+      };
+      const isBuildingInView = (building, matrix, width, height) => {
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+        for (let corner = 0; corner < 8; corner++) {
+          const x = corner & 1 ? building.maxWorldX : building.minWorldX;
+          const y = corner & 2 ? building.maxWorldY : building.minWorldY;
+          const z = corner & 4 ? building.maxWorldZ : building.minWorldZ;
+          const clipX = matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12];
+          const clipY = matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13];
+          const clipW = matrix[3] * x + matrix[7] * y + matrix[11] * z + matrix[15];
+          if (clipW <= 0) return true;
+          const screenX = (clipX / clipW * 0.5 + 0.5) * width;
+          const screenY = (1 - (clipY / clipW * 0.5 + 0.5)) * height;
+          if (screenX < minX) minX = screenX;
+          if (screenX > maxX) maxX = screenX;
+          if (screenY < minY) minY = screenY;
+          if (screenY > maxY) maxY = screenY;
+        }
+        return maxX >= -3 && minX <= width + 3 && maxY >= -3 && minY <= height + 3;
+      };
 
-      features.forEach((feature) => {
+      for (let featureIndex = 0; featureIndex < features.length; featureIndex++) {
+        const feature = features[featureIndex];
         const polygons = feature.geometry.type === 'Polygon' ? [feature.geometry.coordinates] : feature.geometry.coordinates;
-        polygons.forEach((polygon) => {
+        for (let polygonIndex = 0; polygonIndex < polygons.length; polygonIndex++) {
+          const polygon = polygons[polygonIndex];
           const height = Number(feature.properties.mapHeight) || 8;
           const groundRings = [];
           const roofRings = [];
-          polygon.forEach((ring) => {
-            if (ring.length < 4) return;
-            const vertices = ring.slice(0, -1);
-            const elevations = vertices.map(terrainElevation);
-            groundRings.push(vertices.map((coordinate, index) => toMercator(coordinate, elevations[index])));
-            roofRings.push(vertices.map((coordinate, index) => toMercator(coordinate, elevations[index] + height)));
-          });
-          if (groundRings.length) buildings.push({ groundRings, roofRings });
-        });
-      });
+          let minWorldX = Infinity;
+          let minWorldY = Infinity;
+          let minWorldZ = Infinity;
+          let maxWorldX = -Infinity;
+          let maxWorldY = -Infinity;
+          let maxWorldZ = -Infinity;
+          for (let ringIndex = 0; ringIndex < polygon.length; ringIndex++) {
+            const coordinates = polygon[ringIndex];
+            if (coordinates.length < 4) continue;
+            const count = coordinates.length - 1;
+            const points = new Float64Array(count * 6);
+            const groundScreen = new Float32Array(count * 2);
+            const roofScreen = new Float32Array(count * 2);
+            for (let vertexIndex = 0; vertexIndex < count; vertexIndex++) {
+              const coordinate = coordinates[vertexIndex];
+              const elevation = terrainElevation(coordinate);
+              const ground = maplibregl.MercatorCoordinate.fromLngLat(coordinate, elevation);
+              const roof = maplibregl.MercatorCoordinate.fromLngLat(coordinate, elevation + height);
+              const offset = vertexIndex * 3;
+              points[offset] = ground.x;
+              points[offset + 1] = ground.y;
+              points[offset + 2] = ground.z;
+              points[count * 3 + offset] = roof.x;
+              points[count * 3 + offset + 1] = roof.y;
+              points[count * 3 + offset + 2] = roof.z;
+              minWorldX = Math.min(minWorldX, ground.x, roof.x);
+              minWorldY = Math.min(minWorldY, ground.y, roof.y);
+              minWorldZ = Math.min(minWorldZ, ground.z, roof.z);
+              maxWorldX = Math.max(maxWorldX, ground.x, roof.x);
+              maxWorldY = Math.max(maxWorldY, ground.y, roof.y);
+              maxWorldZ = Math.max(maxWorldZ, ground.z, roof.z);
+            }
+            groundRings.push({ count, points, screen: groundScreen });
+            roofRings.push({ count, points, screen: roofScreen });
+          }
+          if (groundRings.length) buildings.push({ groundRings, roofRings, minWorldX, minWorldY, minWorldZ, maxWorldX, maxWorldY, maxWorldZ });
+        }
+      }
 
       return {
         id: 'campus-silhouette-outline',
@@ -297,14 +378,15 @@
         onAdd(_map) {
           this.canvas = document.createElement('canvas');
           this.canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1';
-          this.context = this.canvas.getContext('2d');
+          this.context = this.canvas.getContext('2d', { alpha: true, desynchronized: true });
           this.maskCanvas = document.createElement('canvas');
-          this.maskContext = this.maskCanvas.getContext('2d', { willReadFrequently: true });
+          this.maskContext = this.maskCanvas.getContext('2d', { alpha: true, desynchronized: true });
           _map.getCanvasContainer().appendChild(this.canvas);
         },
         render(_gl, matrix) {
-          const width = map.getCanvas().width;
-          const height = map.getCanvas().height;
+          const mapCanvas = map.getCanvas();
+          const width = mapCanvas.width;
+          const height = mapCanvas.height;
           if (this.canvas.width !== width || this.canvas.height !== height) {
             this.canvas.width = width;
             this.canvas.height = height;
@@ -317,62 +399,63 @@
           }
           const maskContext = this.maskContext;
           maskContext.clearRect(0, 0, maskWidth, maskHeight);
-          const project = ([x, y, z]) => {
-            const clipX = matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12];
-            const clipY = matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13];
-            const clipW = matrix[3] * x + matrix[7] * y + matrix[11] * z + matrix[15];
-            if (clipW <= 0) return null;
-            return [(clipX / clipW * 0.5 + 0.5) * maskWidth, (1 - (clipY / clipW * 0.5 + 0.5)) * maskHeight];
-          };
           maskContext.fillStyle = '#fff';
-          buildings.forEach(({ groundRings, roofRings }) => {
-            maskContext.beginPath();
+          for (let buildingIndex = 0; buildingIndex < buildings.length; buildingIndex++) {
+            const building = buildings[buildingIndex];
+            if (!isBuildingInView(building, matrix, maskWidth, maskHeight)) continue;
+            const groundRings = building.groundRings;
+            const roofRings = building.roofRings;
             let validRoof = true;
-            roofRings.forEach((ring) => {
-              const points = ring.map(project);
-              if (points.some((point) => !point)) { validRoof = false; return; }
-              maskContext.moveTo(points[0][0], points[0][1]);
-              points.slice(1).forEach(([x, y]) => maskContext.lineTo(x, y));
+            for (let ringIndex = 0; ringIndex < roofRings.length; ringIndex++) {
+              projectRing(groundRings[ringIndex], false, matrix, maskWidth, maskHeight);
+              if (!projectRing(roofRings[ringIndex], true, matrix, maskWidth, maskHeight)) validRoof = false;
+            }
+            maskContext.beginPath();
+            for (let ringIndex = 0; ringIndex < roofRings.length; ringIndex++) {
+              const ring = roofRings[ringIndex];
+              const points = ring.screen;
+              if (!Number.isFinite(points[0]) || !Number.isFinite(points[1])) continue;
+              maskContext.moveTo(points[0], points[1]);
+              for (let vertexIndex = 1; vertexIndex < ring.count; vertexIndex++) {
+                const offset = vertexIndex * 2;
+                maskContext.lineTo(points[offset], points[offset + 1]);
+              }
               maskContext.closePath();
-            });
+            }
             if (validRoof) maskContext.fill('evenodd');
 
-            groundRings.forEach((ground, ringIndex) => {
+            maskContext.beginPath();
+            for (let ringIndex = 0; ringIndex < groundRings.length; ringIndex++) {
+              const ground = groundRings[ringIndex];
               const roof = roofRings[ringIndex];
-              for (let index = 0; index < ground.length; index++) {
-                const next = (index + 1) % ground.length;
-                const quad = [ground[index], ground[next], roof[next], roof[index]].map(project);
-                if (quad.some((point) => !point)) continue;
+              const groundPoints = ground.screen;
+              const roofPoints = roof.screen;
+              for (let index = 0; index < ground.count; index++) {
+                const next = (index + 1) % ground.count;
+                const offset = index * 2;
+                const nextOffset = next * 2;
+                if (!Number.isFinite(groundPoints[offset]) || !Number.isFinite(groundPoints[offset + 1]) || !Number.isFinite(groundPoints[nextOffset]) || !Number.isFinite(groundPoints[nextOffset + 1]) || !Number.isFinite(roofPoints[offset]) || !Number.isFinite(roofPoints[offset + 1]) || !Number.isFinite(roofPoints[nextOffset]) || !Number.isFinite(roofPoints[nextOffset + 1])) continue;
                 maskContext.beginPath();
-                maskContext.moveTo(quad[0][0], quad[0][1]);
-                quad.slice(1).forEach(([x, y]) => maskContext.lineTo(x, y));
+                maskContext.moveTo(groundPoints[offset], groundPoints[offset + 1]);
+                maskContext.lineTo(groundPoints[nextOffset], groundPoints[nextOffset + 1]);
+                maskContext.lineTo(roofPoints[nextOffset], roofPoints[nextOffset + 1]);
+                maskContext.lineTo(roofPoints[offset], roofPoints[offset + 1]);
                 maskContext.closePath();
-                maskContext.fill();
               }
-            });
-          });
-
-          // Rebuild the screen-space silhouette for every rendered map frame.
-          const mask = maskContext.getImageData(0, 0, maskWidth, maskHeight).data;
-          const edges = maskContext.createImageData(maskWidth, maskHeight);
-          const edgePixels = edges.data;
-          for (let y = 1; y < maskHeight - 1; y++) {
-            for (let x = 1; x < maskWidth - 1; x++) {
-              const index = (y * maskWidth + x) * 4;
-              if (mask[index + 3] < 16) continue;
-              const hasBackground = mask[index - 4 + 3] < 16 || mask[index + 4 + 3] < 16 || mask[index - maskWidth * 4 + 3] < 16 || mask[index + maskWidth * 4 + 3] < 16;
-              if (!hasBackground) continue;
-              edgePixels[index] = 23;
-              edgePixels[index + 1] = 27;
-              edgePixels[index + 2] = 24;
-              edgePixels[index + 3] = 235;
             }
+            maskContext.fill('evenodd');
           }
-          maskContext.putImageData(edges, 0, 0);
           this.context.setTransform(1, 0, 0, 1, 0, 0);
           this.context.clearRect(0, 0, width, height);
           this.context.imageSmoothingEnabled = true;
+          this.context.shadowColor = '#171b18';
+          this.context.shadowBlur = width > maskWidth ? 2 : 1.25;
           this.context.drawImage(this.maskCanvas, 0, 0, maskWidth, maskHeight, 0, 0, width, height);
+          this.context.shadowColor = 'rgba(0,0,0,0)';
+          this.context.shadowBlur = 0;
+          this.context.globalCompositeOperation = 'destination-out';
+          this.context.drawImage(this.maskCanvas, 0, 0, maskWidth, maskHeight, 0, 0, width, height);
+          this.context.globalCompositeOperation = 'source-over';
         },
         onRemove() {
           this.canvas?.remove();
@@ -531,12 +614,17 @@
 
     function updateMapCompass() {
       if (!map) return;
-      const directions = ['北', '東北', '東', '東南', '南', '西南', '西', '西北'];
-      const bearing = map.getBearing();
-      const northAngle = ((-bearing % 360) + 360) % 360;
-      const direction = directions[Math.round(northAngle / 45) % directions.length];
-      $('#mapCompassRose').style.transform = `rotate(${northAngle}deg)`;
-      $('#mapCompass').setAttribute('aria-label', `方位指針：北方位於${direction}方`);
+      const northAngle = ((-map.getBearing() % 360) + 360) % 360;
+      const angleIndex = Math.round(northAngle * 10) % compassTransforms.length;
+      if (angleIndex !== lastCompassAngle) {
+        mapCompassRose.style.transform = compassTransforms[angleIndex];
+        lastCompassAngle = angleIndex;
+      }
+      const directionIndex = Math.round(northAngle / 45) % compassDirections.length;
+      if (directionIndex !== lastCompassDirection) {
+        mapCompass.setAttribute('aria-label', compassAriaLabels[directionIndex]);
+        lastCompassDirection = directionIndex;
+      }
     }
 
     async function startMap() {
@@ -553,7 +641,7 @@
         maxBounds: [[121.1828, 24.9638], [121.2028, 24.9738]],
         attributionControl: true,
         antialias: true,
-        pixelRatio: Math.min(Math.max(window.devicePixelRatio || 1, 1.5), 2),
+        pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
         style: { version: 8, sources: {}, layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#ffffff' } }] }
       });
       map.addControl(new maplibregl.NavigationControl({ showCompass: true, showZoom: true, visualizePitch: true }), 'top-right');

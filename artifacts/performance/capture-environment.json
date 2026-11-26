@@ -1,0 +1,9 @@
+{
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.0.0 Safari/537.36",
+  "viewport": "2560x1440",
+  "devicePixelRatio": 1,
+  "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+  "webglRenderer": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "timerWebGL2": true,
+  "timerWebGL1": false
+}
