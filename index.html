@@ -63,7 +63,7 @@
           <label class="search-box"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="搜尋待辦與備註" aria-label="搜尋待辦與備註"></label>
         </div>
         <div id="taskList" class="task-list" aria-live="polite"></div>
-        <p class="save-status"><span class="save-dot" aria-hidden="true"></span><span id="saveStatus">待辦會儲存在此裝置</span></p>
+      <p class="save-status"><span class="save-dot" aria-hidden="true"></span><span id="saveStatus">待辦會同步儲存在雲端</span></p>
       </main>
     </div>
   </div>
@@ -86,6 +86,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js';
     import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js';
+    import { collection, deleteDoc, doc, getFirestore, onSnapshot, updateDoc, writeBatch, addDoc } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey: 'AIzaSyD6RdCg6vTumG3UfoIlYCELCIZDpNBkGuE',
@@ -95,7 +96,9 @@
       messagingSenderId: '536806938711',
       appId: '1:536806938711:web:96c4eb16a664bb1c13eb12'
     };
-    const auth = getAuth(initializeApp(firebaseConfig));
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
     const googleProvider = new GoogleAuthProvider();
     googleProvider.setCustomParameters({ prompt: 'select_account' });
 
@@ -114,16 +117,18 @@
     let tasks = [];
     let activeFilter = 'all';
     let toastTimer;
+    let stopTaskSync = null;
 
     const filterTitles = { all: '全部待辦', today: '今天到期', upcoming: '之後處理', done: '已完成' };
     const priorityLabels = { high: '高優先', normal: '一般', low: '低優先' };
     const localDateLine = new Intl.DateTimeFormat('zh-TW', { dateStyle: 'full' }).format(new Date());
     $('#dateLine').textContent = localDateLine;
 
-    function storageKey() { return `${STORAGE_PREFIX}${currentUser.uid}`; }
-    function loadTasks() {
+    function localStorageKey(uid) { return `${STORAGE_PREFIX}${uid}`; }
+    function migrationKey(uid) { return `${STORAGE_PREFIX}${uid}:migrated-to-firestore`; }
+    function loadLocalTasks(uid) {
       try {
-        const saved = localStorage.getItem(storageKey());
+        const saved = localStorage.getItem(localStorageKey(uid));
         const parsed = saved ? JSON.parse(saved) : [];
         return Array.isArray(parsed) ? parsed : [];
       } catch (error) {
@@ -131,15 +136,63 @@
         return [];
       }
     }
-    function saveTasks() {
-      try {
-        localStorage.setItem(storageKey(), JSON.stringify(tasks));
-        $('#saveStatus').textContent = '已儲存在此裝置';
-      } catch (error) {
-        console.error('Unable to save notebook data:', error);
-        $('#saveStatus').textContent = '儲存失敗，請確認瀏覽器儲存空間';
-        showToast('儲存失敗，請稍後再試');
+    function taskCollection(uid = currentUser.uid) { return collection(db, 'users', uid, 'tasks'); }
+    function taskDocument(taskId, uid = currentUser.uid) { return doc(db, 'users', uid, 'tasks', taskId); }
+    function handleFirestoreError(error) {
+      console.error('Firestore operation failed:', error);
+      $('#saveStatus').textContent = '雲端同步發生問題';
+      const messages = {
+        'permission-denied': 'Firestore 權限不足，請確認 Rules 已發布。',
+        'unavailable': '目前無法連線，請檢查網路後重試。',
+        'not-found': '找不到 Firestore 資料庫，請確認已建立資料庫。'
+      };
+      showToast(messages[error.code] || '雲端同步失敗，請稍後再試');
+    }
+    async function migrateLocalTasks(uid, remoteCollection) {
+      const marker = migrationKey(uid);
+      if (localStorage.getItem(marker)) return false;
+      const localTasks = loadLocalTasks(uid);
+      if (!localTasks.length) { localStorage.setItem(marker, 'true'); return false; }
+      $('#saveStatus').textContent = '正在匯入此裝置的待辦…';
+      for (let start = 0; start < localTasks.length; start += 450) {
+        const batch = writeBatch(db);
+        localTasks.slice(start, start + 450).forEach(task => {
+          const id = typeof task.id === 'string' && task.id ? task.id : crypto.randomUUID();
+          batch.set(doc(remoteCollection, id), {
+            title: String(task.title || '未命名待辦'),
+            note: String(task.note || ''),
+            dueDate: String(task.dueDate || ''),
+            priority: ['high', 'normal', 'low'].includes(task.priority) ? task.priority : 'normal',
+            done: Boolean(task.done),
+            createdAt: Number(task.createdAt) || Date.now(),
+            completedAt: Number(task.completedAt) || 0
+          });
+        });
+        await batch.commit();
       }
+      localStorage.setItem(marker, 'true');
+      showToast(`已匯入 ${localTasks.length} 件本機待辦`);
+      return true;
+    }
+    function startTaskSync(user) {
+      if (stopTaskSync) stopTaskSync();
+      const remoteCollection = taskCollection(user.uid);
+      let checkedInitialServerSnapshot = false;
+      $('#saveStatus').textContent = '正在連線至 Firestore…';
+      stopTaskSync = onSnapshot(remoteCollection, { includeMetadataChanges: true }, async snapshot => {
+        if (!snapshot.metadata.fromCache && !checkedInitialServerSnapshot) {
+          checkedInitialServerSnapshot = true;
+          if (snapshot.empty) {
+            try { if (await migrateLocalTasks(user.uid, remoteCollection)) return; }
+            catch (error) { handleFirestoreError(error); }
+          }
+        }
+        tasks = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+        render();
+        $('#saveStatus').textContent = snapshot.metadata.fromCache
+          ? '顯示離線資料，連線後會同步'
+          : snapshot.metadata.hasPendingWrites ? '正在同步至雲端…' : '已同步至雲端';
+      }, handleFirestoreError);
     }
     function showToast(message) {
       toast.textContent = message;
@@ -262,12 +315,10 @@
         visible.forEach(task => taskList.append(renderTask(task)));
       }
     }
-    function addTask(values) {
+    async function addTask(values) {
       const title = values.title.trim();
       if (!title) return;
-      tasks.push({ id: crypto.randomUUID(), title, note: values.note.trim(), dueDate: values.dueDate, priority: values.priority || 'normal', done: false, createdAt: Date.now(), completedAt: 0 });
-      saveTasks();
-      render();
+      await addDoc(taskCollection(), { title, note: values.note.trim(), dueDate: values.dueDate, priority: values.priority || 'normal', done: false, createdAt: Date.now(), completedAt: 0 });
       showToast('已加入待辦');
     }
     function openEditor(task) {
@@ -306,14 +357,21 @@
       currentUser = user;
       loginGate.hidden = Boolean(user);
       appShell.hidden = !user;
-      if (!user) { tasks = []; taskList.replaceChildren(); return; }
+      if (!user) {
+        if (stopTaskSync) stopTaskSync();
+        stopTaskSync = null;
+        tasks = [];
+        taskList.replaceChildren();
+        return;
+      }
       $('#userEmail').textContent = user.displayName || user.email || 'Google 使用者';
       const avatar = $('#userAvatar');
       if (user.photoURL) { avatar.src = user.photoURL; avatar.hidden = false; }
       else { avatar.removeAttribute('src'); avatar.hidden = true; }
-      $('#saveStatus').textContent = '待辦會儲存在此裝置';
-      tasks = loadTasks();
+      $('#saveStatus').textContent = '正在連線至 Firestore…';
+      tasks = [];
       render();
+      startTaskSync(user);
     });
 
     $('#filterNav').addEventListener('click', event => {
@@ -323,60 +381,62 @@
       render();
     });
     $('#focusAddButton').addEventListener('click', () => $('#quickTitle').focus());
-    quickAddForm.addEventListener('submit', event => {
+    quickAddForm.addEventListener('submit', async event => {
       event.preventDefault();
       const data = new FormData(quickAddForm);
-      addTask({ title: data.get('title'), note: data.get('note'), dueDate: data.get('dueDate'), priority: data.get('priority') });
-      quickAddForm.reset();
-      $('#quickTitle').focus();
+      const submitButton = quickAddForm.querySelector('[type="submit"]');
+      submitButton.disabled = true;
+      try {
+        await addTask({ title: data.get('title'), note: data.get('note'), dueDate: data.get('dueDate'), priority: data.get('priority') });
+        quickAddForm.reset();
+        $('#quickTitle').focus();
+      } catch (error) { handleFirestoreError(error); }
+      finally { submitButton.disabled = false; }
     });
     searchInput.addEventListener('input', render);
-    taskList.addEventListener('change', event => {
+    taskList.addEventListener('change', async event => {
       const checkbox = event.target.closest('[data-action="toggle"]');
       if (!checkbox) return;
       const task = tasks.find(item => item.id === checkbox.dataset.id);
       if (!task) return;
-      task.done = checkbox.checked;
-      task.completedAt = task.done ? Date.now() : 0;
-      saveTasks();
-      render();
+      try { await updateDoc(taskDocument(task.id), { done: checkbox.checked, completedAt: checkbox.checked ? Date.now() : 0 }); }
+      catch (error) { handleFirestoreError(error); }
     });
-    taskList.addEventListener('click', event => {
+    taskList.addEventListener('click', async event => {
       const button = event.target.closest('[data-action="edit"],[data-action="delete"]');
       if (!button) return;
       const task = tasks.find(item => item.id === button.dataset.id);
       if (!task) return;
       if (button.dataset.action === 'edit') openEditor(task);
       else if (confirm(`確定刪除「${task.title}」嗎？`)) {
-        tasks = tasks.filter(item => item.id !== task.id);
-        saveTasks();
-        render();
-        showToast('已刪除待辦');
+        try { await deleteDoc(taskDocument(task.id)); showToast('已刪除待辦'); }
+        catch (error) { handleFirestoreError(error); }
       }
     });
-    $('#editForm').addEventListener('submit', event => {
+    $('#editForm').addEventListener('submit', async event => {
       event.preventDefault();
       const task = tasks.find(item => item.id === $('#editId').value);
       if (!task) return;
-      task.title = $('#editTitle').value.trim();
-      task.note = $('#editNote').value.trim();
-      task.dueDate = $('#editDue').value;
-      task.priority = $('#editPriority').value;
-      saveTasks();
-      render();
-      editModal.hidden = true;
-      showToast('已儲存變更');
+      try {
+        await updateDoc(taskDocument(task.id), { title: $('#editTitle').value.trim(), note: $('#editNote').value.trim(), dueDate: $('#editDue').value, priority: $('#editPriority').value });
+        editModal.hidden = true;
+        showToast('已儲存變更');
+      } catch (error) { handleFirestoreError(error); }
     });
     $('#cancelEditButton').addEventListener('click', () => { editModal.hidden = true; });
     $('#closeEditButton').addEventListener('click', () => { editModal.hidden = true; });
     editModal.addEventListener('click', event => { if (event.target === editModal) editModal.hidden = true; });
-    $('#clearCompletedButton').addEventListener('click', () => {
-      const completedCount = tasks.filter(task => task.done).length;
-      if (!completedCount || !confirm(`確定清除 ${completedCount} 件已完成事項嗎？`)) return;
-      tasks = tasks.filter(task => !task.done);
-      saveTasks();
-      render();
-      showToast('已清除完成事項');
+    $('#clearCompletedButton').addEventListener('click', async () => {
+      const completedTasks = tasks.filter(task => task.done);
+      if (!completedTasks.length || !confirm(`確定清除 ${completedTasks.length} 件已完成事項嗎？`)) return;
+      try {
+        for (let start = 0; start < completedTasks.length; start += 450) {
+          const batch = writeBatch(db);
+          completedTasks.slice(start, start + 450).forEach(task => batch.delete(taskDocument(task.id)));
+          await batch.commit();
+        }
+        showToast('已清除完成事項');
+      } catch (error) { handleFirestoreError(error); }
     });
     document.addEventListener('keydown', event => { if (event.key === 'Escape') editModal.hidden = true; });
   </script>
