@@ -105,6 +105,63 @@
       });
     }
 
+    function createBuildingShadowFeatures(features) {
+      const shadows = [];
+      const sunAzimuth = 220 * Math.PI / 180;
+      const sunAltitude = (90 - 42) * Math.PI / 180;
+      const shadowAzimuth = sunAzimuth + Math.PI;
+      const shadowDirection = [Math.sin(shadowAzimuth), Math.cos(shadowAzimuth)];
+      const convexHull = (points) => {
+        const sorted = points.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+        if (sorted.length < 3) return sorted;
+        const cross = (origin, a, b) => (a[0] - origin[0]) * (b[1] - origin[1]) - (a[1] - origin[1]) * (b[0] - origin[0]);
+        const lower = [];
+        const upper = [];
+        sorted.forEach((point) => {
+          while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) lower.pop();
+          lower.push(point);
+        });
+        sorted.slice().reverse().forEach((point) => {
+          while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) upper.pop();
+          upper.push(point);
+        });
+        lower.pop();
+        upper.pop();
+        return lower.concat(upper);
+      };
+
+      features.forEach((feature) => {
+        const polygons = feature.geometry.type === 'Polygon' ? [feature.geometry.coordinates] : feature.geometry.coordinates;
+        polygons.forEach((polygon) => {
+          const ring = polygon[0];
+          if (ring.length < 4) return;
+          const vertices = ring.slice(0, -1);
+          const latitude = vertices.reduce((sum, point) => sum + point[1] / vertices.length, 0);
+          const metersPerLongitude = 111320 * Math.cos(latitude * Math.PI / 180);
+          const footprint = vertices.map(([longitude, lat]) => [longitude * metersPerLongitude, lat * 111320]);
+          const height = Number(feature.properties.mapHeight) || 8;
+          const coreLength = height / Math.tan(sunAltitude);
+
+          [
+            { kind: 'building-shadow-soft', length: coreLength + 7 },
+            { kind: 'building-shadow-core', length: coreLength }
+          ].forEach(({ kind, length }) => {
+            const offset = [shadowDirection[0] * length, shadowDirection[1] * length];
+            const hull = convexHull(footprint.concat(footprint.map(([x, y]) => [x + offset[0], y + offset[1]])));
+            const coordinates = hull.map(([x, y]) => [x / metersPerLongitude, y / 111320]);
+            coordinates.push(coordinates[0]);
+            shadows.push({
+              type: 'Feature',
+              properties: { kind },
+              geometry: { type: 'Polygon', coordinates: [coordinates] }
+            });
+          });
+        });
+      });
+
+      return { type: 'FeatureCollection', features: shadows };
+    }
+
     function roundFootprintRing(ring) {
       const vertices = ring.length > 1 && ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1] ? ring.slice(0, -1) : ring;
       if (vertices.length < 4) return ring;
@@ -443,6 +500,7 @@
           gateCoordinates = gates.map((feature) => feature.geometry.coordinates);
           campusBounds = calculateCampusBounds(data.features.filter((feature) => feature.properties.kind !== 'gate'));
           setBuildingHeights(buildingFeatures);
+          const buildingShadows = createBuildingShadowFeatures(buildingFeatures);
           map.addSource('campus-terrain', {
             type: 'raster-dem',
             tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
@@ -452,7 +510,7 @@
             attribution: '© AWS Terrain Tiles'
           });
           map.setTerrain({ source: 'campus-terrain', exaggeration: 0.68 });
-          map.setLight({ anchor: 'viewport', color: '#fffdf7', intensity: 0.9, position: [1.15, 220, 42] });
+          map.setLight({ anchor: 'map', color: '#fffdf7', intensity: 0.9, position: [1.15, 220, 42] });
           map.setSky({
             'sky-color': '#ffffff',
             'horizon-color': '#f4f5f3',
@@ -463,10 +521,13 @@
             'atmosphere-blend': 0.58
           });
           map.addSource('campus', { type: 'geojson', data, attribution: '© OpenStreetMap contributors' });
+          map.addSource('campus-building-shadows', { type: 'geojson', data: buildingShadows });
           map.addLayer({ id: 'campus-green', source: 'campus', type: 'fill', filter: ['==', ['get', 'kind'], 'green'], paint: { 'fill-color': '#f1f2ef', 'fill-opacity': 0.92 } });
           map.addLayer({ id: 'campus-water', source: 'campus', type: 'fill', filter: ['==', ['get', 'kind'], 'water'], paint: { 'fill-color': '#e8eef0', 'fill-opacity': 0.95 } });
           map.addLayer({ id: 'campus-road-casing', source: 'campus', type: 'line', filter: ['==', ['get', 'kind'], 'road'], layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 4.8, 18, 9.4], 'line-opacity': 1 } });
           map.addLayer({ id: 'campus-roads', source: 'campus', type: 'line', filter: ['==', ['get', 'kind'], 'road'], layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#cbd0cc', 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 3.2, 18, 7.2], 'line-opacity': 1 } });
+          map.addLayer({ id: 'campus-building-shadow-soft', source: 'campus-building-shadows', type: 'fill', filter: ['==', ['get', 'kind'], 'building-shadow-soft'], paint: { 'fill-color': '#68726b', 'fill-opacity': 0.035 } });
+          map.addLayer({ id: 'campus-building-shadow-core', source: 'campus-building-shadows', type: 'fill', filter: ['==', ['get', 'kind'], 'building-shadow-core'], paint: { 'fill-color': '#59635c', 'fill-opacity': 0.085 } });
           map.addLayer({
             id: 'campus-buildings', source: 'campus', type: 'fill-extrusion', filter: ['==', ['get', 'kind'], 'building'],
             paint: {
