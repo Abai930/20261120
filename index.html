@@ -3,90 +3,57 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f4f6f4">
-  <title>拾記｜待辦筆記本</title>
+  <meta name="theme-color" content="#f5f6f2">
+  <title>中央大學 3D 校園地圖</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
   <style>
-    :root{font-family:Inter,"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;color:#202b26;background:#f4f6f4;font-synthesis:none;text-rendering:optimizeLegibility;--ink:#202b26;--muted:#758079;--line:#e7ebe7;--green:#26745c;--green-dark:#1e5e4b;--mint:#e8f3ed;--paper:#fff;--orange:#b86b3d;--shadow:0 14px 40px #1c34250a}*{box-sizing:border-box}body{margin:0;min-width:320px;min-height:100vh}button,input,textarea,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #69aa8c70;outline-offset:2px}[hidden]{display:none!important}.login-screen{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 12% 10%,#e1efe6 0,transparent 42%),#f4f6f4}.login-card{width:min(430px,100%);padding:46px 42px;text-align:center;background:var(--paper);border:1px solid #e5ebe6;border-radius:24px;box-shadow:0 24px 80px #17342110}.brand-mark{width:46px;height:46px;display:grid;place-items:center;margin:0 auto 18px;border-radius:15px;background:var(--green);color:white;font-size:22px;font-weight:800}.login-card h1{margin:0;font-size:30px;letter-spacing:.02em}.login-card .subtitle{margin:12px 0 28px;color:var(--muted);font-size:14px;line-height:1.8}.google-button{width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:13px 18px;border:1px solid #dce3dd;border-radius:12px;background:#fff;color:#29342e;font-weight:650;transition:background .15s,border-color .15s}.google-button:hover{background:#f7faf7;border-color:#c6d6ca}.google-g{font-size:18px;font-weight:800;color:#4285f4}.login-hint{min-height:22px;margin:14px 0 0;color:#a64b44;font-size:12px;line-height:1.6}.app-shell{min-height:100vh;max-width:1440px;margin:auto}.topbar{height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;border-bottom:1px solid var(--line);background:#ffffffd9}.brand{display:flex;align-items:center;gap:12px;color:var(--ink);font-weight:800;letter-spacing:.015em}.brand .brand-mark{width:34px;height:34px;margin:0;border-radius:11px;font-size:17px}.brand small{display:block;color:var(--muted);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}.account{display:flex;align-items:center;gap:12px}.avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#e5eee8}.account-email{max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#536058;font-size:13px}.text-button{padding:8px 11px;border:0;border-radius:9px;background:transparent;color:#68756d;font-size:12px}.text-button:hover{background:#eef2ee;color:var(--ink)}.layout{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:calc(100vh - 76px)}.sidebar{padding:30px 18px;border-right:1px solid var(--line);background:#fbfcfb}.new-task-link{width:100%;display:flex;align-items:center;gap:10px;padding:13px 15px;border:0;border-radius:12px;background:var(--green);color:white;font-size:14px;font-weight:700;box-shadow:0 5px 12px #26745c21}.new-task-link:hover{background:var(--green-dark)}.plus{font-size:19px;font-weight:400;line-height:1}.nav-label{margin:30px 11px 10px;color:#9aa39c;font-size:10px;font-weight:750;letter-spacing:.14em}.nav-list{display:grid;gap:4px}.nav-item{width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px 12px;border:0;border-radius:10px;background:transparent;color:#5f6b63;text-align:left;font-size:13px}.nav-item:hover{background:#f1f4f1}.nav-item.active{background:var(--mint);color:var(--green-dark);font-weight:700}.nav-item .nav-label-text{display:flex;align-items:center;gap:10px}.nav-icon{width:18px;text-align:center;font-size:15px}.nav-count{color:#99a39c;font-size:11px}.sidebar-note{margin-top:42px;padding:15px 13px;border:1px solid #e5ede7;border-radius:13px;background:#f7faf7;color:#68756d;font-size:11px;line-height:1.7}.sidebar-note strong{display:block;margin-bottom:4px;color:#3b5948;font-size:12px}.main{width:min(920px,100%);margin:0 auto;padding:42px 48px 70px}.page-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:27px}.eyebrow{margin:0 0 7px;color:var(--green);font-size:10px;font-weight:800;letter-spacing:.16em}.page-heading h1{margin:0;font-size:clamp(28px,4vw,38px);letter-spacing:-.04em}.date-line{margin:8px 0 0;color:var(--muted);font-size:13px}.task-total{flex:none;color:#758079;font-size:12px}.capture-card{padding:18px;border:1px solid #e6ebe6;border-radius:17px;background:var(--paper);box-shadow:var(--shadow)}.capture-title{display:flex;align-items:center;gap:12px}.capture-title input{flex:1;min-width:0;padding:9px 2px;border:0;background:transparent;color:var(--ink);font-size:15px}.capture-title input::placeholder{color:#aab2ac}.capture-fields{display:grid;grid-template-columns:minmax(0,1fr) 150px 138px auto;gap:10px;align-items:center;margin-top:12px;padding-top:13px;border-top:1px solid #f0f2f0}.capture-fields input,.capture-fields select,.edit-form input,.edit-form textarea,.edit-form select{width:100%;padding:9px 11px;border:1px solid #e8ece8;border-radius:9px;background:#fbfcfb;color:#435048;font-size:12px}.capture-fields input::placeholder,.edit-form input::placeholder,.edit-form textarea::placeholder{color:#a6aea8}.add-button{padding:10px 15px;border:0;border-radius:9px;background:#e8f3ed;color:#21634d;font-size:12px;font-weight:750;white-space:nowrap}.add-button:hover{background:#dcece2}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:30px 0 13px}.toolbar-left{display:flex;align-items:center;gap:9px}.toolbar h2{margin:0;font-size:15px;font-weight:750}.search-box{width:min(240px,42vw);position:relative}.search-box input{width:100%;padding:9px 12px 9px 34px;border:1px solid #e5eae5;border-radius:10px;background:#fff;color:var(--ink);font-size:12px}.search-box span{position:absolute;left:12px;top:8px;color:#98a29a;font-size:15px}.clear-button{padding:8px;border:0;background:transparent;color:#9a6257;font-size:11px}.clear-button:hover{color:#9b4437}.task-list{display:grid;gap:9px}.task-card{display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:start;gap:13px;padding:16px 17px;border:1px solid #e7ebe7;border-radius:14px;background:var(--paper);box-shadow:0 5px 18px #18342106;transition:border-color .15s,transform .15s}.task-card:hover{border-color:#d4e1d7;transform:translateY(-1px)}.task-check{appearance:none;width:19px;height:19px;margin:2px 0 0;border:1.5px solid #c6d1c8;border-radius:50%;background:white;cursor:pointer}.task-check:checked{border-color:var(--green);background:var(--green);box-shadow:inset 0 0 0 4px white}.task-body{min-width:0}.task-title{margin:0;color:#2f3933;font-size:14px;font-weight:650;line-height:1.5;overflow-wrap:anywhere}.task-note{margin:5px 0 0;color:#7e8981;font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}.task-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:7px;background:#f3f5f3;color:#758079;font-size:10px}.chip.due-soon{background:#fff3e9;color:#ad6537}.chip.overdue{background:#fff0ed;color:#ac5345}.chip.priority-high{background:#fff0ed;color:#ac5345}.chip.priority-low{background:#f1f3f1;color:#7e8981}.task-actions{display:flex;gap:3px;opacity:.72}.icon-button{width:30px;height:30px;display:grid;place-items:center;border:0;border-radius:8px;background:transparent;color:#7c8780;font-size:14px}.icon-button:hover{background:#f1f4f1;color:#344038}.icon-button.delete:hover{background:#fff0ed;color:#aa5143}.completed .task-title{text-decoration:line-through;color:#97a19a}.completed .task-note{color:#a5ada7}.empty-state{padding:52px 20px;text-align:center;border:1px dashed #dce4dd;border-radius:15px;background:#fafcfb}.empty-icon{width:47px;height:47px;display:grid;place-items:center;margin:0 auto 13px;border-radius:16px;background:#eaf3ed;color:var(--green);font-size:22px}.empty-state h3{margin:0;color:#3a463e;font-size:14px}.empty-state p{margin:7px 0 0;color:#87928a;font-size:12px}.save-status{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:22px;color:#9aa49c;font-size:10px}.save-dot{width:6px;height:6px;border-radius:50%;background:#78aa8b}.modal-backdrop{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:20px;background:#17251c66;backdrop-filter:blur(3px)}.modal-card{width:min(480px,100%);padding:23px;border:1px solid #e5ebe6;border-radius:18px;background:#fff;box-shadow:0 22px 70px #14271b2b}.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.modal-head h2{margin:0;font-size:18px}.modal-close{width:30px;height:30px;border:0;border-radius:8px;background:#f3f5f3;color:#647168;font-size:18px}.edit-form{display:grid;gap:12px}.edit-form label{display:grid;gap:6px;color:#657168;font-size:11px;font-weight:650}.edit-form input,.edit-form textarea,.edit-form select{font-size:13px}.edit-form textarea{min-height:90px;resize:vertical;line-height:1.6}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}.cancel-button,.save-button{padding:10px 15px;border-radius:9px;font-size:12px;font-weight:700}.cancel-button{border:1px solid #e3e8e3;background:white;color:#657168}.save-button{border:1px solid var(--green);background:var(--green);color:white}.toast{position:fixed;z-index:20;left:50%;bottom:24px;transform:translate(-50%,15px);padding:11px 16px;border-radius:10px;background:#26362d;color:#f6fff8;font-size:12px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}.toast.show{transform:translate(-50%,0);opacity:1}
-    @media(max-width:760px){.topbar{height:66px;padding:0 18px}.layout{grid-template-columns:1fr;min-height:calc(100vh - 66px)}.sidebar{display:flex;gap:10px;align-items:center;padding:12px 18px;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto}.new-task-link{width:auto;flex:none;padding:10px 13px}.nav-label,.sidebar-note{display:none}.nav-list{display:flex;gap:3px;min-width:max-content}.nav-item{width:auto;gap:8px;padding:9px 10px}.nav-count{display:none}.main{padding:30px 20px 55px}.capture-fields{grid-template-columns:1fr 1fr}.capture-fields input:first-child{grid-column:1/-1}.capture-fields .add-button{grid-column:1/-1}.topbar{padding:0 16px}.account-email{max-width:140px}.page-heading{align-items:flex-start}.task-total{margin-top:8px}}
-    @media(max-width:460px){.login-card{padding:36px 24px}.brand small{display:none}.brand{font-size:14px}.account{gap:6px}.account-email{display:none}.page-heading h1{font-size:29px}.main{padding-right:14px;padding-left:14px}.toolbar{align-items:flex-start;flex-direction:column}.toolbar-left{width:100%;justify-content:space-between}.search-box{width:100%}.task-card{grid-template-columns:22px minmax(0,1fr) auto;padding:14px 12px;gap:9px}.task-actions{opacity:1}.icon-button{width:27px;height:27px}.capture-card{padding:14px}.capture-fields{gap:8px}}
+    :root{font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;color:#2e382f;background:#f4f0e7;font-synthesis:none;text-rendering:optimizeLegibility;--green:#425d4c;--line:#ded7c7;--muted:#807d70;--paper:#f7f3e9;--ink:#2e382f;--accent:#a55f48}
+    *{box-sizing:border-box}body{margin:0;min-width:320px;min-height:100vh}button,input{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #6caa8e80;outline-offset:2px}[hidden]{display:none!important}
+    .login-screen{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 14% 8%,#e6e4d5 0,transparent 42%),#f4f0e7}.login-card{width:min(410px,100%);padding:42px 38px;text-align:center;background:var(--paper);border:1px solid #e0d9c9;border-radius:5px;box-shadow:0 22px 70px #282a2014}.brand-mark{width:46px;height:46px;display:grid;place-items:center;margin:0 auto 17px;border-radius:50%;background:var(--green);color:#f5f0df;font-family:"Noto Serif TC",serif;font-size:21px}.login-card h1{margin:0;font-family:"Noto Serif TC","Songti TC",serif;font-size:25px;font-weight:500;letter-spacing:.08em}.login-card p{margin:11px 0 25px;color:var(--muted);font-size:13px;line-height:1.8}.google-button{width:100%;display:flex;align-items:center;justify-content:center;gap:11px;padding:13px 16px;border:1px solid #d5cebd;border-radius:4px;background:#faf7ee;color:#29342e;font-weight:600}.google-button:hover{background:#f2eddf}.google-button:disabled{opacity:.65;cursor:wait}.google-g{font-size:18px;font-weight:800;color:#4285f4}.login-hint{min-height:20px;margin:13px 0 0!important;color:#a64b44!important;font-size:12px!important}
+    .app-shell{height:100vh;height:100dvh;min-height:460px;display:flex;flex-direction:column}.topbar{height:72px;flex:none;display:flex;align-items:center;gap:28px;padding:0 28px;border-bottom:1px solid #d9d2c1;background:#f5f1e7}.brand{display:flex;align-items:center;gap:11px;min-width:max-content;color:#2f4034;font-family:"Noto Serif TC","Songti TC",serif;font-size:17px;font-weight:500;letter-spacing:.08em}.brand-mark.small{width:36px;height:36px;margin:0;border:1px solid #9da48c;border-radius:50%;font-size:15px}.brand-title small{display:block;margin-top:2px;color:#858371;font-family:Georgia,serif;font-size:8px;letter-spacing:.19em}.search-wrap{position:relative;width:min(340px,38vw);margin-left:auto}.search-input{width:100%;height:38px;padding:0 13px;border:1px solid #d8d1c1;border-radius:3px;background:#f9f6ee;color:#26332a;font-size:12px}.search-input::placeholder{color:#8c8979}.search-results{position:absolute;top:44px;left:0;right:0;z-index:5;display:grid;gap:2px;max-height:260px;overflow:auto;padding:5px;border:1px solid #ddd5c4;border-radius:4px;background:#f8f4e9;box-shadow:0 12px 32px #282a201a}.search-results:empty{display:none}.search-result{width:100%;padding:9px 10px;border:0;border-radius:3px;background:transparent;color:#354239;text-align:left;font-family:"Noto Serif TC",serif;font-size:12px}.search-result:hover,.search-result:focus-visible{background:#ece9da}.account{display:flex;align-items:center;gap:9px;min-width:max-content}.avatar{width:31px;height:31px;border-radius:50%;object-fit:cover;background:#e5eee8}.account-email{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#69766d;font-size:11px}.text-button{padding:7px 9px;border:0;border-radius:3px;background:transparent;color:#68756d;font-size:11px}.text-button:hover{background:#eae6d9}.map-stage{position:relative;flex:1;min-height:0;background:#ece8dc}.map-canvas{position:absolute;inset:0}.map-actions{position:absolute;z-index:3;top:17px;right:18px;display:flex;gap:7px}.map-button{min-height:35px;padding:7px 12px;border:1px solid #d5cbb6;border-radius:3px;background:#f7f2e6ed;color:#4b5b4a;font-family:"Noto Serif TC",serif;font-size:11px;box-shadow:0 3px 10px #302d2012;backdrop-filter:blur(8px)}.map-button:hover,.map-button[aria-pressed="true"]{background:#fbf7eb;color:#304937}.map-caption{position:absolute;z-index:2;left:18px;bottom:14px;padding:5px 9px;border-left:2px solid #9e6e50;background:#f7f2e5d9;color:#777565;font-family:"Noto Serif TC",serif;font-size:10px;letter-spacing:.04em;pointer-events:none}.map-loading{position:absolute;inset:0;z-index:2;display:grid;place-items:center;color:#627067;font-size:13px;pointer-events:none}.map-loading span{padding:11px 15px;border:1px solid #d5cbb6;border-radius:3px;background:#f7f2e5eb}.maplibregl-ctrl-group{overflow:hidden;border:1px solid #d5cbb6!important;border-radius:3px!important;box-shadow:0 3px 10px #302d2012!important}.maplibregl-ctrl-group button{width:33px;height:33px;background-color:#f7f2e5ed!important}.maplibregl-ctrl-attrib{border-radius:5px 0 0 0;background:#f7f2e5d9!important;color:#555b4e!important;font-size:9px!important}.maplibregl-ctrl-attrib a{color:#52634e!important}.maplibregl-popup-content{padding:8px 12px;border:1px solid #d7ccb7;border-radius:3px;background:#f7f2e6;color:#344037;font-family:"Noto Serif TC",serif;font-size:12px;box-shadow:0 5px 18px #302d2022}.maplibregl-popup-tip{border-top-color:#f7f2e6!important}.gate-marker{display:flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid #bda98d;border-radius:3px;background:#f8f2e4;color:#384b3e;font-family:"Noto Serif TC",serif;font-size:12px;letter-spacing:.04em;white-space:nowrap;box-shadow:0 3px 11px #302d2025}.gate-marker:hover{background:#fff9eb}.gate-marker-dot{width:8px;height:8px;border-radius:50%;background:#a55f48;box-shadow:0 0 0 3px #a55f4824}.gate-marker-back .gate-marker-dot{background:#627861;box-shadow:0 0 0 3px #62786124}
+    .road-key{display:inline-flex;align-items:center;gap:7px;margin-right:8px;color:#646b59}.road-key::before{content:"";width:17px;height:2px;background:#a98b64;box-shadow:0 0 0 2px #f7f2e5;display:inline-block;vertical-align:middle}
+    @media(max-width:640px){.topbar{height:auto;min-height:64px;flex-wrap:wrap;gap:8px 12px;padding:8px 12px}.brand{font-size:14px}.brand-mark.small{width:31px;height:31px}.search-wrap{order:3;width:100%;margin:0}.account{margin-left:auto;gap:5px}.account-email{display:none}.map-stage{min-height:0}.map-actions{top:10px;right:10px}.map-caption{bottom:10px;left:10px}}
   </style>
 </head>
 <body>
   <section id="loginGate" class="login-screen" aria-labelledby="loginTitle">
     <div class="login-card">
-      <div class="brand-mark" aria-hidden="true">✓</div>
-      <h1 id="loginTitle">拾記</h1>
-      <p class="subtitle">把想做的事一件件寫下來。<br>登入後開始整理你的每日待辦。</p>
+      <div class="brand-mark" aria-hidden="true">中</div>
+      <h1 id="loginTitle">中央大學 3D 校園地圖</h1>
+      <p>使用 Google 帳號登入後瀏覽校區。</p>
       <button id="googleSignInButton" class="google-button" type="button"><span class="google-g" aria-hidden="true">G</span>使用 Google 帳號登入</button>
       <p id="loginMessage" class="login-hint" aria-live="polite"></p>
     </div>
   </section>
 
+  <script>
+    if (window.location.protocol === 'file:') {
+      document.getElementById('googleSignInButton').disabled = true;
+      document.getElementById('loginMessage').textContent = '目前是直接開啟 index.html（file://），Firebase 登入無法運作。請改用 GitHub Pages 或本機網站伺服器；若使用 localhost，請在 Firebase 授權網域加入 localhost（不含連接埠）。';
+    }
+  </script>
+
   <div id="appShell" class="app-shell" hidden>
     <header class="topbar">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">✓</span><span>拾記<small>DAILY NOTEBOOK</small></span></div>
+      <div class="brand"><span class="brand-mark small" aria-hidden="true">中</span><span class="brand-title">中大・校園漫遊<small>A CAMPUS ATLAS</small></span></div>
+      <label class="search-wrap"><input id="placeSearch" class="search-input" type="search" placeholder="尋一處建築" autocomplete="off" aria-label="搜尋建築" aria-expanded="false" aria-controls="searchResults"><div id="searchResults" class="search-results" role="listbox" aria-label="建築搜尋結果"></div></label>
       <div class="account"><img id="userAvatar" class="avatar" alt="" hidden><span id="userEmail" class="account-email"></span><button id="signOutButton" class="text-button" type="button">登出</button></div>
     </header>
-    <div class="layout">
-      <aside class="sidebar" aria-label="待辦篩選">
-        <button id="focusAddButton" class="new-task-link" type="button"><span class="plus">＋</span>新增待辦</button>
-        <div>
-          <div class="nav-label">檢視</div>
-          <nav id="filterNav" class="nav-list">
-            <button class="nav-item active" type="button" data-filter="all"><span class="nav-label-text"><span class="nav-icon">▦</span>全部待辦</span><span id="countAll" class="nav-count">0</span></button>
-            <button class="nav-item" type="button" data-filter="today"><span class="nav-label-text"><span class="nav-icon">◷</span>今天到期</span><span id="countToday" class="nav-count">0</span></button>
-            <button class="nav-item" type="button" data-filter="upcoming"><span class="nav-label-text"><span class="nav-icon">▧</span>之後處理</span><span id="countUpcoming" class="nav-count">0</span></button>
-            <button class="nav-item" type="button" data-filter="done"><span class="nav-label-text"><span class="nav-icon">✓</span>已完成</span><span id="countDone" class="nav-count">0</span></button>
-          </nav>
-        </div>
-        <div class="sidebar-note"><strong>留一點空間給自己</strong>一件一件完成，就已經很棒了。</div>
-      </aside>
-
-      <main class="main">
-        <section class="page-heading">
-          <div><p class="eyebrow">MY SPACE</p><h1 id="pageTitle">全部待辦</h1><p id="dateLine" class="date-line"></p></div>
-          <span id="taskTotal" class="task-total"></span>
-        </section>
-
-        <form id="quickAddForm" class="capture-card">
-          <div class="capture-title"><span class="plus" aria-hidden="true" style="color:#26745c">＋</span><input id="quickTitle" name="title" maxlength="140" placeholder="記下一件待辦…" aria-label="待辦事項標題" required></div>
-          <div class="capture-fields">
-            <input id="quickNote" name="note" maxlength="1000" placeholder="補充備註（選填）" aria-label="備註">
-            <input id="quickDue" name="dueDate" type="date" aria-label="到期日">
-            <select id="quickPriority" name="priority" aria-label="優先程度"><option value="normal">一般優先</option><option value="high">高優先</option><option value="low">低優先</option></select>
-            <button class="add-button" type="submit">加入待辦</button>
-          </div>
-        </form>
-
-        <div class="toolbar">
-          <div class="toolbar-left"><h2 id="listHeading">待辦清單</h2><button id="clearCompletedButton" class="clear-button" type="button" hidden>清除已完成</button></div>
-          <label class="search-box"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="搜尋待辦與備註" aria-label="搜尋待辦與備註"></label>
-        </div>
-        <div id="taskList" class="task-list" aria-live="polite"></div>
-      <p class="save-status"><span class="save-dot" aria-hidden="true"></span><span id="saveStatus">待辦會同步儲存在雲端</span></p>
-      </main>
-    </div>
+    <main class="map-stage" aria-label="中央大學校區 3D 地圖">
+      <div id="map" class="map-canvas" role="application" aria-label="可旋轉與縮放的校園地圖"></div>
+      <div id="mapLoading" class="map-loading"><span>載入校園地圖…</span></div>
+      <div class="map-actions"><button id="viewModeButton" class="map-button" type="button" aria-pressed="true">切換平面</button><button id="resetViewButton" class="map-button" type="button">回到校區</button></div>
+      <div class="map-caption"><span class="road-key">校園道路</span>沿著林蔭漫遊 · 建築高度為示意</div>
+    </main>
   </div>
 
-  <div id="editModal" class="modal-backdrop" hidden>
-    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="editHeading">
-      <div class="modal-head"><h2 id="editHeading">編輯待辦</h2><button id="closeEditButton" class="modal-close" type="button" aria-label="關閉">×</button></div>
-      <form id="editForm" class="edit-form">
-        <input id="editId" type="hidden">
-        <label>待辦事項<input id="editTitle" maxlength="140" required></label>
-        <label>備註<textarea id="editNote" maxlength="1000" placeholder="補充細節或想法"></textarea></label>
-        <label>到期日<input id="editDue" type="date"></label>
-        <label>優先程度<select id="editPriority"><option value="normal">一般優先</option><option value="high">高優先</option><option value="low">低優先</option></select></label>
-        <div class="modal-actions"><button id="cancelEditButton" class="cancel-button" type="button">取消</button><button class="save-button" type="submit">儲存變更</button></div>
-      </form>
-    </section>
-  </div>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js';
     import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js';
-    import { collection, deleteDoc, doc, getFirestore, onSnapshot, updateDoc, writeBatch, addDoc } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey: 'AIzaSyD6RdCg6vTumG3UfoIlYCELCIZDpNBkGuE',
@@ -98,347 +65,297 @@
     };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
     const googleProvider = new GoogleAuthProvider();
     googleProvider.setCustomParameters({ prompt: 'select_account' });
-
     const $ = (selector) => document.querySelector(selector);
     const loginGate = $('#loginGate');
     const appShell = $('#appShell');
-    const loginMessage = $('#loginMessage');
-    const quickAddForm = $('#quickAddForm');
-    const taskList = $('#taskList');
-    const searchInput = $('#searchInput');
-    const editModal = $('#editModal');
-    const toast = $('#toast');
-    const STORAGE_PREFIX = 'shiji-notebook-v1:';
-    const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-    let currentUser = null;
-    let tasks = [];
-    let activeFilter = 'all';
-    let toastTimer;
-    let stopTaskSync = null;
+    const mapLoading = $('#mapLoading');
+    let map;
+    let mapStarted = false;
+    let buildingFeatures = [];
+    let gateCoordinates = [];
+    let campusBounds;
+    let selectedId;
+    let selectedPopup;
+    let threeDimensional = true;
 
-    const filterTitles = { all: '全部待辦', today: '今天到期', upcoming: '之後處理', done: '已完成' };
-    const priorityLabels = { high: '高優先', normal: '一般', low: '低優先' };
-    const localDateLine = new Intl.DateTimeFormat('zh-TW', { dateStyle: 'full' }).format(new Date());
-    $('#dateLine').textContent = localDateLine;
+    function getFootprintArea(feature) {
+      const ring = feature.geometry.coordinates && feature.geometry.coordinates[0];
+      if (!ring || ring.length < 4) return 100;
+      let twiceArea = 0;
+      let latitude = 0;
+      for (let i = 0; i < ring.length - 1; i++) {
+        twiceArea += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1];
+        latitude += ring[i][1];
+      }
+      latitude /= ring.length - 1;
+      return Math.abs(twiceArea / 2) * 111320 * 111320 * Math.cos(latitude * Math.PI / 180);
+    }
 
-    function localStorageKey(uid) { return `${STORAGE_PREFIX}${uid}`; }
-    function migrationKey(uid) { return `${STORAGE_PREFIX}${uid}:migrated-to-firestore`; }
-    function loadLocalTasks(uid) {
-      try {
-        const saved = localStorage.getItem(localStorageKey(uid));
-        const parsed = saved ? JSON.parse(saved) : [];
-        return Array.isArray(parsed) ? parsed : [];
-      } catch (error) {
-        console.error('Unable to read notebook data:', error);
-        return [];
-      }
-    }
-    function taskCollection(uid = currentUser.uid) { return collection(db, 'users', uid, 'tasks'); }
-    function taskDocument(taskId, uid = currentUser.uid) { return doc(db, 'users', uid, 'tasks', taskId); }
-    function handleFirestoreError(error) {
-      console.error('Firestore operation failed:', error);
-      $('#saveStatus').textContent = '雲端同步發生問題';
-      const messages = {
-        'permission-denied': 'Firestore 權限不足，請確認 Rules 已發布。',
-        'unavailable': '目前無法連線，請檢查網路後重試。',
-        'not-found': '找不到 Firestore 資料庫，請確認已建立資料庫。'
-      };
-      showToast(messages[error.code] || '雲端同步失敗，請稍後再試');
-    }
-    async function migrateLocalTasks(uid, remoteCollection) {
-      const marker = migrationKey(uid);
-      if (localStorage.getItem(marker)) return false;
-      const localTasks = loadLocalTasks(uid);
-      if (!localTasks.length) { localStorage.setItem(marker, 'true'); return false; }
-      $('#saveStatus').textContent = '正在匯入此裝置的待辦…';
-      for (let start = 0; start < localTasks.length; start += 450) {
-        const batch = writeBatch(db);
-        localTasks.slice(start, start + 450).forEach(task => {
-          const id = typeof task.id === 'string' && task.id ? task.id : crypto.randomUUID();
-          batch.set(doc(remoteCollection, id), {
-            title: String(task.title || '未命名待辦'),
-            note: String(task.note || ''),
-            dueDate: String(task.dueDate || ''),
-            priority: ['high', 'normal', 'low'].includes(task.priority) ? task.priority : 'normal',
-            done: Boolean(task.done),
-            createdAt: Number(task.createdAt) || Date.now(),
-            completedAt: Number(task.completedAt) || 0
-          });
-        });
-        await batch.commit();
-      }
-      localStorage.setItem(marker, 'true');
-      showToast(`已匯入 ${localTasks.length} 件本機待辦`);
-      return true;
-    }
-    function startTaskSync(user) {
-      if (stopTaskSync) stopTaskSync();
-      const remoteCollection = taskCollection(user.uid);
-      let checkedInitialServerSnapshot = false;
-      $('#saveStatus').textContent = '正在連線至 Firestore…';
-      stopTaskSync = onSnapshot(remoteCollection, { includeMetadataChanges: true }, async snapshot => {
-        if (!snapshot.metadata.fromCache && !checkedInitialServerSnapshot) {
-          checkedInitialServerSnapshot = true;
-          if (snapshot.empty) {
-            try { if (await migrateLocalTasks(user.uid, remoteCollection)) return; }
-            catch (error) { handleFirestoreError(error); }
-          }
-        }
-        tasks = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
-        render();
-        $('#saveStatus').textContent = snapshot.metadata.fromCache
-          ? '顯示離線資料，連線後會同步'
-          : snapshot.metadata.hasPendingWrites ? '正在同步至雲端…' : '已同步至雲端';
-      }, handleFirestoreError);
-    }
-    function showToast(message) {
-      toast.textContent = message;
-      toast.classList.add('show');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
-    }
-    function countTasks() {
-      return {
-        all: tasks.filter(task => !task.done).length,
-        today: tasks.filter(task => !task.done && task.dueDate === today).length,
-        upcoming: tasks.filter(task => !task.done && task.dueDate && task.dueDate > today).length,
-        done: tasks.filter(task => task.done).length
-      };
-    }
-    function getVisibleTasks() {
-      const query = searchInput.value.trim().toLocaleLowerCase();
-      return tasks.filter(task => {
-        const matchesFilter = activeFilter === 'all' ? !task.done
-          : activeFilter === 'today' ? !task.done && task.dueDate === today
-          : activeFilter === 'upcoming' ? !task.done && task.dueDate && task.dueDate > today
-          : task.done;
-        const text = `${task.title} ${task.note || ''}`.toLocaleLowerCase();
-        return matchesFilter && (!query || text.includes(query));
-      }).sort((a, b) => {
-        if (activeFilter === 'done') return (b.completedAt || 0) - (a.completedAt || 0);
-        if (a.dueDate && b.dueDate && a.dueDate !== b.dueDate) return a.dueDate.localeCompare(b.dueDate);
-        if (a.dueDate && !b.dueDate) return -1;
-        if (!a.dueDate && b.dueDate) return 1;
-        return (b.createdAt || 0) - (a.createdAt || 0);
+    function setBuildingHeights(features) {
+      features.forEach((feature) => {
+        const knownHeight = Number(feature.properties.height) || 0;
+        const knownLevels = Number(feature.properties.levels) || 0;
+        const illustrativeHeight = Math.max(7, Math.min(25, 6 + Math.sqrt(getFootprintArea(feature)) * 0.36));
+        feature.properties.mapHeight = knownHeight || (knownLevels ? knownLevels * 3.2 : Math.round(illustrativeHeight * 10) / 10);
       });
     }
-    function makeChip(text, className = '') {
-      const chip = document.createElement('span');
-      chip.className = `chip ${className}`.trim();
-      chip.textContent = text;
-      return chip;
-    }
-    function renderTask(task) {
-      const card = document.createElement('article');
-      card.className = `task-card${task.done ? ' completed' : ''}`;
-      const checkbox = document.createElement('input');
-      checkbox.className = 'task-check';
-      checkbox.type = 'checkbox';
-      checkbox.checked = Boolean(task.done);
-      checkbox.dataset.action = 'toggle';
-      checkbox.dataset.id = task.id;
-      checkbox.setAttribute('aria-label', task.done ? '標記為未完成' : '標記為已完成');
-      const body = document.createElement('div');
-      body.className = 'task-body';
-      const title = document.createElement('h3');
-      title.className = 'task-title';
-      title.textContent = task.title;
-      body.append(title);
-      if (task.note) {
-        const note = document.createElement('p');
-        note.className = 'task-note';
-        note.textContent = task.note;
-        body.append(note);
-      }
-      const meta = document.createElement('div');
-      meta.className = 'task-meta';
-      if (task.dueDate) {
-        const due = new Date(`${task.dueDate}T00:00:00`);
-        const label = new Intl.DateTimeFormat('zh-TW', { month: 'numeric', day: 'numeric' }).format(due);
-        const dueClass = !task.done && task.dueDate < today ? 'overdue' : !task.done && task.dueDate === today ? 'due-soon' : '';
-        meta.append(makeChip(`${dueClass === 'overdue' ? '逾期 · ' : dueClass ? '今天 · ' : '到期 · '}${label}`, dueClass));
-      }
-      meta.append(makeChip(priorityLabels[task.priority] || '一般', `priority-${task.priority || 'normal'}`));
-      body.append(meta);
 
-      const actions = document.createElement('div');
-      actions.className = 'task-actions';
-      const edit = document.createElement('button');
-      edit.className = 'icon-button';
-      edit.type = 'button';
-      edit.dataset.action = 'edit';
-      edit.dataset.id = task.id;
-      edit.setAttribute('aria-label', '編輯待辦');
-      edit.title = '編輯';
-      edit.textContent = '✎';
-      const remove = document.createElement('button');
-      remove.className = 'icon-button delete';
-      remove.type = 'button';
-      remove.dataset.action = 'delete';
-      remove.dataset.id = task.id;
-      remove.setAttribute('aria-label', '刪除待辦');
-      remove.title = '刪除';
-      remove.textContent = '×';
-      actions.append(edit, remove);
-      card.append(checkbox, body, actions);
-      return card;
+    function centerOf(feature) {
+      const ring = feature.geometry.coordinates[0];
+      let longitude = 0;
+      let latitude = 0;
+      const count = ring.length - 1;
+      for (let i = 0; i < count; i++) { longitude += ring[i][0]; latitude += ring[i][1]; }
+      return [longitude / count, latitude / count];
     }
-    function render() {
-      const counts = countTasks();
-      $('#countAll').textContent = counts.all;
-      $('#countToday').textContent = counts.today;
-      $('#countUpcoming').textContent = counts.upcoming;
-      $('#countDone').textContent = counts.done;
-      $('#pageTitle').textContent = filterTitles[activeFilter];
-      $('#listHeading').textContent = activeFilter === 'all' ? '待辦清單' : filterTitles[activeFilter];
-      $('#taskTotal').textContent = `${counts.all} 件未完成`;
-      $('#clearCompletedButton').hidden = counts.done === 0;
-      document.querySelectorAll('[data-filter]').forEach(button => button.classList.toggle('active', button.dataset.filter === activeFilter));
-      taskList.replaceChildren();
-      const visible = getVisibleTasks();
-      if (!visible.length) {
-        const empty = document.createElement('section');
-        empty.className = 'empty-state';
-        const icon = document.createElement('div');
-        icon.className = 'empty-icon';
-        icon.textContent = activeFilter === 'done' ? '✓' : '✦';
-        const heading = document.createElement('h3');
-        heading.textContent = searchInput.value ? '沒有找到符合的待辦' : activeFilter === 'done' ? '還沒有完成的事項' : activeFilter === 'today' ? '今天沒有到期事項' : activeFilter === 'upcoming' ? '目前沒有排定日期的待辦' : '清單還很清爽';
-        const detail = document.createElement('p');
-        detail.textContent = searchInput.value ? '試試其他關鍵字。' : activeFilter === 'all' ? '把待辦寫下來，讓思緒輕一點。' : '有新的事情時，再記在這裡。';
-        empty.append(icon, heading, detail);
-        taskList.append(empty);
-      } else {
-        visible.forEach(task => taskList.append(renderTask(task)));
+
+    function selectBuilding(feature, moveMap = true) {
+      if (selectedId !== undefined) map.setFeatureState({ source: 'campus', id: selectedId }, { selected: false });
+      selectedId = feature.id;
+      map.setFeatureState({ source: 'campus', id: selectedId }, { selected: true });
+      const center = centerOf(feature);
+      const label = feature.properties.name || '校園建築';
+      if (selectedPopup) selectedPopup.remove();
+      selectedPopup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 8 }).setLngLat(center).setText(label).addTo(map);
+      if (moveMap) map.flyTo({ center, zoom: 17.4, pitch: threeDimensional ? 58 : 0, duration: 750 });
+    }
+
+    function renderSearchResults() {
+      const input = $('#placeSearch');
+      const results = $('#searchResults');
+      const query = input.value.trim().toLocaleLowerCase();
+      results.replaceChildren();
+      if (!query) { input.setAttribute('aria-expanded', 'false'); return; }
+      const matches = buildingFeatures.filter((feature) => (feature.properties.name || '').toLocaleLowerCase().includes(query)).slice(0, 8);
+      input.setAttribute('aria-expanded', String(matches.length > 0));
+      matches.forEach((feature) => {
+        const item = document.createElement('button');
+        item.className = 'search-result';
+        item.type = 'button';
+        item.setAttribute('role', 'option');
+        item.textContent = feature.properties.name;
+        item.addEventListener('click', () => {
+          input.value = feature.properties.name;
+          results.replaceChildren();
+          input.setAttribute('aria-expanded', 'false');
+          selectBuilding(feature);
+        });
+        results.append(item);
+      });
+    }
+
+    function setMapMessage(message) {
+      mapLoading.hidden = false;
+      mapLoading.replaceChildren();
+      const label = document.createElement('span');
+      label.textContent = message;
+      mapLoading.append(label);
+    }
+
+    function addGateMarkers(gates) {
+      gates.forEach((gate) => {
+        const marker = document.createElement('button');
+        marker.type = 'button';
+        marker.className = 'gate-marker' + (gate.properties.entrance === 'back' ? ' gate-marker-back' : '');
+        marker.setAttribute('aria-label', '前往中央大學' + gate.properties.name);
+        const dot = document.createElement('span');
+        dot.className = 'gate-marker-dot';
+        dot.setAttribute('aria-hidden', 'true');
+        const text = document.createElement('span');
+        text.textContent = gate.properties.name;
+        marker.append(dot, text);
+        const coordinates = gate.geometry.coordinates;
+        marker.addEventListener('click', (event) => {
+          event.stopPropagation();
+          map.flyTo({ center: coordinates, zoom: 16.6, pitch: threeDimensional ? 58 : 0, duration: 700 });
+        });
+        new maplibregl.Marker({ element: marker, anchor: 'bottom' }).setLngLat(coordinates).addTo(map);
+      });
+    }
+
+    function calculateCampusBounds(features) {
+      const bounds = [Infinity, Infinity, -Infinity, -Infinity];
+      const visit = (coordinates) => {
+        if (!Array.isArray(coordinates)) return;
+        if (typeof coordinates[0] === 'number' && typeof coordinates[1] === 'number') {
+          bounds[0] = Math.min(bounds[0], coordinates[0]);
+          bounds[1] = Math.min(bounds[1], coordinates[1]);
+          bounds[2] = Math.max(bounds[2], coordinates[0]);
+          bounds[3] = Math.max(bounds[3], coordinates[1]);
+          return;
+        }
+        coordinates.forEach(visit);
+      };
+      features.forEach((feature) => visit(feature.geometry.coordinates));
+      if (!Number.isFinite(bounds[0])) return [[121.1835, 24.9645], [121.2020, 24.9730]];
+      const longitudePadding = 0.00035;
+      const latitudePadding = 0.00025;
+      return [[bounds[0] - longitudePadding, bounds[1] - latitudePadding], [bounds[2] + longitudePadding, bounds[3] + latitudePadding]];
+    }
+
+    function wholeCampusBounds() {
+      return campusBounds || [[121.1835, 24.9645], [121.2020, 24.9730]];
+    }
+
+    function keepCampusAndGatesInView() {
+      if (!map || !gateCoordinates.length) return;
+      const [[west, south], [east, north]] = wholeCampusBounds();
+      const points = [
+        [west, south], [west, north], [east, south], [east, north],
+        ...gateCoordinates
+      ];
+      const width = map.getContainer().clientWidth;
+      const height = map.getContainer().clientHeight;
+      const safe = { left: 66, right: width - 180, top: 72, bottom: height - 64 };
+
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const projected = points.map((point) => map.project(point));
+        const minX = Math.min(...projected.map((point) => point.x));
+        const maxX = Math.max(...projected.map((point) => point.x));
+        const minY = Math.min(...projected.map((point) => point.y));
+        const maxY = Math.max(...projected.map((point) => point.y));
+        const fits = minX >= safe.left && maxX <= safe.right && minY >= safe.top && maxY <= safe.bottom;
+        if (fits) return;
+
+        const scale = Math.min(1, (safe.right - safe.left) / (maxX - minX), (safe.bottom - safe.top) / (maxY - minY));
+        const targetX = Math.max(safe.left + (maxX - minX) / 2, Math.min(safe.right - (maxX - minX) / 2, (minX + maxX) / 2));
+        const targetY = Math.max(safe.top + (maxY - minY) / 2, Math.min(safe.bottom - (maxY - minY) / 2, (minY + maxY) / 2));
+        const center = map.unproject([targetX, targetY]);
+        const zoom = Math.max(12.8, map.getZoom() + (scale < 0.99 ? Math.log2(scale * 0.92) : 0));
+        map.jumpTo({ center: [center.lng, center.lat], zoom, pitch: map.getPitch(), bearing: map.getBearing() });
       }
     }
-    async function addTask(values) {
-      const title = values.title.trim();
-      if (!title) return;
-      await addDoc(taskCollection(), { title, note: values.note.trim(), dueDate: values.dueDate, priority: values.priority || 'normal', done: false, createdAt: Date.now(), completedAt: 0 });
-      showToast('已加入待辦');
+
+    function fitCampus(duration = 0, pitch = 48) {
+      if (!map) return;
+      map.resize();
+      const camera = map.cameraForBounds(wholeCampusBounds(), {
+        padding: { top: 82, right: 118, bottom: 76, left: 66 },
+        bearing: -12,
+        pitch,
+        maxZoom: 15.6
+      });
+      if (!camera) return;
+      camera.pitch = pitch;
+      camera.bearing = -12;
+      if (duration) {
+        map.easeTo({ ...camera, duration });
+        map.once('moveend', keepCampusAndGatesInView);
+      } else {
+        map.jumpTo(camera);
+        keepCampusAndGatesInView();
+      }
     }
-    function openEditor(task) {
-      $('#editId').value = task.id;
-      $('#editTitle').value = task.title;
-      $('#editNote').value = task.note || '';
-      $('#editDue').value = task.dueDate || '';
-      $('#editPriority').value = task.priority || 'normal';
-      editModal.hidden = false;
-      $('#editTitle').focus();
+
+    async function startMap() {
+      if (mapStarted) { map.resize(); return; }
+      mapStarted = true;
+      if (!window.maplibregl) { setMapMessage('地圖元件載入失敗，請重新整理。'); return; }
+      map = new maplibregl.Map({
+        container: 'map',
+        center: [121.19155, 24.96844],
+        zoom: 15.8,
+        pitch: 58,
+        bearing: -15,
+        maxPitch: 68,
+        maxBounds: [[121.1828, 24.9638], [121.2028, 24.9738]],
+        attributionControl: true,
+        style: { version: 8, sources: {}, layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#e8eee5' } }] }
+      });
+      map.addControl(new maplibregl.NavigationControl({ showCompass: true, showZoom: true, visualizePitch: true }), 'top-right');
+      map.on('load', async () => {
+        try {
+          const response = await fetch('data/ncu-campus.geojson');
+          if (!response.ok) throw new Error('Campus GeoJSON request failed: ' + response.status);
+          const data = await response.json();
+          buildingFeatures = data.features.filter((feature) => feature.properties.kind === 'building');
+          const gates = data.features.filter((feature) => feature.properties.kind === 'gate');
+          gateCoordinates = gates.map((feature) => feature.geometry.coordinates);
+          campusBounds = calculateCampusBounds(data.features.filter((feature) => feature.properties.kind !== 'gate'));
+          setBuildingHeights(buildingFeatures);
+          map.addSource('campus', { type: 'geojson', data, attribution: '© OpenStreetMap contributors' });
+          map.addLayer({ id: 'campus-green', source: 'campus', type: 'fill', filter: ['==', ['get', 'kind'], 'green'], paint: { 'fill-color': '#a4b193', 'fill-opacity': 0.72 } });
+          map.addLayer({ id: 'campus-water', source: 'campus', type: 'fill', filter: ['==', ['get', 'kind'], 'water'], paint: { 'fill-color': '#a5c2bc', 'fill-opacity': 0.83 } });
+          map.addLayer({ id: 'campus-road-casing', source: 'campus', type: 'line', filter: ['==', ['get', 'kind'], 'road'], paint: { 'line-color': '#f3ecdf', 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 3, 18, 6], 'line-opacity': 0.96 } });
+          map.addLayer({ id: 'campus-roads', source: 'campus', type: 'line', filter: ['==', ['get', 'kind'], 'road'], paint: { 'line-color': '#bba07b', 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 1.2, 18, 2.7], 'line-opacity': 0.88 } });
+          map.addLayer({
+            id: 'campus-buildings', source: 'campus', type: 'fill-extrusion', filter: ['==', ['get', 'kind'], 'building'],
+            paint: {
+              'fill-extrusion-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#a55f48', '#c6baa6'],
+              'fill-extrusion-height': ['to-number', ['get', 'mapHeight']],
+              'fill-extrusion-base': 0,
+              'fill-extrusion-opacity': 0.98
+            }
+          });
+          addGateMarkers(gates);
+          map.on('click', 'campus-buildings', (event) => { if (event.features && event.features[0]) selectBuilding(event.features[0], false); });
+          map.on('mouseenter', 'campus-buildings', () => { map.getCanvas().style.cursor = 'pointer'; });
+          map.on('mouseleave', 'campus-buildings', () => { map.getCanvas().style.cursor = ''; });
+          fitCampus();
+          mapLoading.hidden = true;
+        } catch (error) {
+          console.error('Campus map failed to load:', error);
+          setMapMessage('校園圖資載入失敗，請重新整理。');
+        }
+      });
     }
 
     $('#googleSignInButton').addEventListener('click', async () => {
       const button = $('#googleSignInButton');
       button.disabled = true;
-      loginMessage.textContent = '正在開啟 Google 登入…';
-      try {
-        await signInWithPopup(auth, googleProvider);
-      } catch (error) {
+      $('#loginMessage').textContent = '正在開啟 Google 登入…';
+      try { await signInWithPopup(auth, googleProvider); }
+      catch (error) {
         console.error('Google sign-in failed:', error);
         const messages = {
           'auth/popup-closed-by-user': '你已關閉登入視窗。',
-          'auth/popup-blocked': '瀏覽器封鎖了登入視窗，請允許彈出式視窗後重試。',
-          'auth/unauthorized-domain': '此網站網域尚未加入 Firebase 授權網域。'
+          'auth/popup-blocked': '瀏覽器封鎖登入視窗，請允許後重試。',
+          'auth/unauthorized-domain': 'Firebase 尚未授權目前網站網域。請到 Authentication → Settings → Authorized domains 加入該網域。',
+          'auth/operation-not-allowed': 'Firebase 尚未啟用 Google 登入，請到 Authentication → Sign-in method 啟用 Google。',
+          'auth/network-request-failed': '網路連線失敗，請檢查網路後重試。'
         };
-        loginMessage.textContent = messages[error.code] || '登入失敗，請稍後再試。';
-      } finally {
-        button.disabled = false;
-      }
+        $('#loginMessage').textContent = messages[error.code] || `登入失敗（${error.code || '未知錯誤'}），請檢查 Firebase Authentication 設定後重試。`;
+      } finally { button.disabled = false; }
     });
-
-    $('#signOutButton').addEventListener('click', async () => {
-      try { await signOut(auth); } catch (error) { console.error('Sign-out failed:', error); showToast('登出失敗，請稍後再試'); }
-    });
-    onAuthStateChanged(auth, user => {
-      currentUser = user;
+    $('#signOutButton').addEventListener('click', async () => { try { await signOut(auth); } catch (error) { console.error('Sign-out failed:', error); } });
+    onAuthStateChanged(auth, (user) => {
       loginGate.hidden = Boolean(user);
       appShell.hidden = !user;
-      if (!user) {
-        if (stopTaskSync) stopTaskSync();
-        stopTaskSync = null;
-        tasks = [];
-        taskList.replaceChildren();
-        return;
-      }
+      if (!user) return;
       $('#userEmail').textContent = user.displayName || user.email || 'Google 使用者';
       const avatar = $('#userAvatar');
       if (user.photoURL) { avatar.src = user.photoURL; avatar.hidden = false; }
       else { avatar.removeAttribute('src'); avatar.hidden = true; }
-      $('#saveStatus').textContent = '正在連線至 Firestore…';
-      tasks = [];
-      render();
-      startTaskSync(user);
+      requestAnimationFrame(() => startMap());
     });
-
-    $('#filterNav').addEventListener('click', event => {
-      const button = event.target.closest('[data-filter]');
-      if (!button) return;
-      activeFilter = button.dataset.filter;
-      render();
-    });
-    $('#focusAddButton').addEventListener('click', () => $('#quickTitle').focus());
-    quickAddForm.addEventListener('submit', async event => {
-      event.preventDefault();
-      const data = new FormData(quickAddForm);
-      const submitButton = quickAddForm.querySelector('[type="submit"]');
-      submitButton.disabled = true;
-      try {
-        await addTask({ title: data.get('title'), note: data.get('note'), dueDate: data.get('dueDate'), priority: data.get('priority') });
-        quickAddForm.reset();
-        $('#quickTitle').focus();
-      } catch (error) { handleFirestoreError(error); }
-      finally { submitButton.disabled = false; }
-    });
-    searchInput.addEventListener('input', render);
-    taskList.addEventListener('change', async event => {
-      const checkbox = event.target.closest('[data-action="toggle"]');
-      if (!checkbox) return;
-      const task = tasks.find(item => item.id === checkbox.dataset.id);
-      if (!task) return;
-      try { await updateDoc(taskDocument(task.id), { done: checkbox.checked, completedAt: checkbox.checked ? Date.now() : 0 }); }
-      catch (error) { handleFirestoreError(error); }
-    });
-    taskList.addEventListener('click', async event => {
-      const button = event.target.closest('[data-action="edit"],[data-action="delete"]');
-      if (!button) return;
-      const task = tasks.find(item => item.id === button.dataset.id);
-      if (!task) return;
-      if (button.dataset.action === 'edit') openEditor(task);
-      else if (confirm(`確定刪除「${task.title}」嗎？`)) {
-        try { await deleteDoc(taskDocument(task.id)); showToast('已刪除待辦'); }
-        catch (error) { handleFirestoreError(error); }
+    $('#placeSearch').addEventListener('input', renderSearchResults);
+    $('#placeSearch').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const query = event.currentTarget.value.trim().toLocaleLowerCase();
+        const feature = buildingFeatures.find((item) => (item.properties.name || '').toLocaleLowerCase().includes(query));
+        if (feature) { $('#searchResults').replaceChildren(); event.currentTarget.setAttribute('aria-expanded', 'false'); selectBuilding(feature); }
       }
+      if (event.key === 'Escape') { $('#searchResults').replaceChildren(); event.currentTarget.setAttribute('aria-expanded', 'false'); }
     });
-    $('#editForm').addEventListener('submit', async event => {
-      event.preventDefault();
-      const task = tasks.find(item => item.id === $('#editId').value);
-      if (!task) return;
-      try {
-        await updateDoc(taskDocument(task.id), { title: $('#editTitle').value.trim(), note: $('#editNote').value.trim(), dueDate: $('#editDue').value, priority: $('#editPriority').value });
-        editModal.hidden = true;
-        showToast('已儲存變更');
-      } catch (error) { handleFirestoreError(error); }
+    $('#viewModeButton').addEventListener('click', (event) => {
+      threeDimensional = !threeDimensional;
+      event.currentTarget.textContent = threeDimensional ? '切換平面' : '切換立體';
+      event.currentTarget.setAttribute('aria-pressed', String(threeDimensional));
+      if (map && map.getLayer('campus-buildings')) map.easeTo({ pitch: threeDimensional ? 58 : 0, duration: 450 });
     });
-    $('#cancelEditButton').addEventListener('click', () => { editModal.hidden = true; });
-    $('#closeEditButton').addEventListener('click', () => { editModal.hidden = true; });
-    editModal.addEventListener('click', event => { if (event.target === editModal) editModal.hidden = true; });
-    $('#clearCompletedButton').addEventListener('click', async () => {
-      const completedTasks = tasks.filter(task => task.done);
-      if (!completedTasks.length || !confirm(`確定清除 ${completedTasks.length} 件已完成事項嗎？`)) return;
-      try {
-        for (let start = 0; start < completedTasks.length; start += 450) {
-          const batch = writeBatch(db);
-          completedTasks.slice(start, start + 450).forEach(task => batch.delete(taskDocument(task.id)));
-          await batch.commit();
-        }
-        showToast('已清除完成事項');
-      } catch (error) { handleFirestoreError(error); }
+    $('#resetViewButton').addEventListener('click', () => {
+      if (threeDimensional) fitCampus(700, 48);
+      else fitCampus(700, 0);
+      if (selectedId !== undefined) map.setFeatureState({ source: 'campus', id: selectedId }, { selected: false });
+      selectedId = undefined;
+      if (selectedPopup) selectedPopup.remove();
+      selectedPopup = null;
+      $('#placeSearch').value = '';
+      $('#searchResults').replaceChildren();
     });
-    document.addEventListener('keydown', event => { if (event.key === 'Escape') editModal.hidden = true; });
   </script>
 </body>
 </html>
